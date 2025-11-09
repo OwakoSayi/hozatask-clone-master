@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 export const CTA = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
@@ -13,7 +16,7 @@ export const CTA = () => {
               Join millions who trust HozaTask for their everyday needs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" variant="cta" className="text-lg">
+              <Button size="lg" variant="cta" className="text-lg" onClick={() => navigate("/auth")}>
                 Get Started Now
               </Button>
               <Button 
