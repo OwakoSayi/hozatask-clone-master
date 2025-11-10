@@ -44,6 +44,9 @@ export const Header = () => {
                   <button onClick={() => navigate("/dashboard")} className="text-sm font-medium hover:text-primary transition-colors">
                     Dashboard
                   </button>
+                  <button onClick={() => navigate("/tasker-profile")} className="text-sm font-medium hover:text-primary transition-colors">
+                    My Services
+                  </button>
                 </>
               )}
               {!user && (

@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Browse from "./pages/Browse";
 import TaskDetail from "./pages/TaskDetail";
 import Dashboard from "./pages/Dashboard";
+import TaskerProfile from "./pages/TaskerProfile";
 import Review from "./pages/Review";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/browse" element={<Browse />} />
           <Route path="/task/:id" element={<TaskDetail />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/tasker-profile" element={<TaskerProfile />} />
           <Route path="/review/:bookingId" element={<Review />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
