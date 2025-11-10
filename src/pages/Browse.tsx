@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Star, DollarSign } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface Task {
   id: string;
@@ -18,10 +19,13 @@ interface Task {
   category_id: string;
   profiles: {
     full_name: string;
+    avatar_url: string | null;
   };
   categories: {
     name: string;
   };
+  avg_rating?: number;
+  review_count?: number;
 }
 
 export default function Browse() {
@@ -63,14 +67,36 @@ export default function Browse() {
         .from("tasks")
         .select(`
           *,
-          profiles!tasks_tasker_id_fkey(full_name),
+          profiles!tasks_tasker_id_fkey(full_name, avatar_url),
           categories(name)
         `)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTasks(data || []);
+
+      // Get ratings for each tasker
+      const tasksWithRatings = await Promise.all(
+        (data || []).map(async (task) => {
+          const { data: reviews } = await supabase
+            .from("reviews")
+            .select("rating")
+            .eq("reviewee_id", task.tasker_id);
+
+          const ratings = reviews || [];
+          const avg_rating = ratings.length > 0
+            ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+            : 0;
+
+          return {
+            ...task,
+            avg_rating,
+            review_count: ratings.length,
+          };
+        })
+      );
+
+      setTasks(tasksWithRatings);
     } catch (error: any) {
       console.error("Error loading tasks:", error.message);
     } finally {
@@ -110,12 +136,27 @@ export default function Browse() {
               {filteredTasks.map((task) => (
                 <Card key={task.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
+                    <div className="flex items-start gap-4">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={task.profiles.avatar_url || ""} />
+                        <AvatarFallback>{task.profiles.full_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
                         <CardTitle className="line-clamp-1">{task.title}</CardTitle>
                         <CardDescription className="flex items-center gap-1 mt-1">
                           <span className="font-medium">{task.categories.name}</span>
                         </CardDescription>
+                        <div className="flex items-center gap-1 mt-1">
+                          {task.review_count! > 0 ? (
+                            <>
+                              <Star className="w-4 h-4 fill-primary text-primary" />
+                              <span className="text-sm font-medium">{task.avg_rating?.toFixed(1)}</span>
+                              <span className="text-sm text-muted-foreground">({task.review_count})</span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No reviews yet</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </CardHeader>
@@ -126,14 +167,13 @@ export default function Browse() {
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <DollarSign className="w-4 h-4 text-primary" />
-                        <span className="font-semibold">${task.hourly_rate}/hour</span>
+                        <span className="font-semibold">R{task.hourly_rate}/hour</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-muted-foreground" />
                         <span>{task.location}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 text-muted-foreground" />
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <span>By {task.profiles.full_name}</span>
                       </div>
                     </div>

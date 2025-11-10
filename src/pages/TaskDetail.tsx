@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MapPin, DollarSign, Star, Calendar } from "lucide-react";
 import { toast } from "sonner";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function TaskDetail() {
   const { id } = useParams();
@@ -21,6 +22,8 @@ export default function TaskDetail() {
   const [hours, setHours] = useState("1");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -54,7 +57,7 @@ export default function TaskDetail() {
         .from("tasks")
         .select(`
           *,
-          profiles!tasks_tasker_id_fkey(full_name, bio),
+          profiles!tasks_tasker_id_fkey(full_name, bio, avatar_url),
           categories(name, description)
         `)
         .eq("id", id)
@@ -62,6 +65,19 @@ export default function TaskDetail() {
 
       if (error) throw error;
       setTask(data);
+
+      // Load ratings
+      const { data: reviews } = await supabase
+        .from("reviews")
+        .select("rating")
+        .eq("reviewee_id", data.tasker_id);
+
+      const ratings = reviews || [];
+      if (ratings.length > 0) {
+        const avg = ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
+        setAvgRating(avg);
+        setReviewCount(ratings.length);
+      }
     } catch (error: any) {
       console.error("Error loading task:", error.message);
       toast.error("Failed to load task details");
@@ -145,7 +161,7 @@ export default function TaskDetail() {
                       <DollarSign className="w-5 h-5 text-primary" />
                       <div>
                         <p className="text-sm text-muted-foreground">Hourly Rate</p>
-                        <p className="font-semibold">${task.hourly_rate}/hour</p>
+                        <p className="font-semibold">R{task.hourly_rate}/hour</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -158,16 +174,32 @@ export default function TaskDetail() {
                   </div>
 
                   <div>
-                    <h3 className="font-semibold mb-2 flex items-center gap-2">
-                      <Star className="w-5 h-5" />
+                    <h3 className="font-semibold mb-3 flex items-center gap-2">
                       About the Tasker
                     </h3>
-                    <p className="text-muted-foreground mb-2">
-                      <span className="font-medium">{task.profiles.full_name}</span>
-                    </p>
-                    {task.profiles.bio && (
-                      <p className="text-sm text-muted-foreground">{task.profiles.bio}</p>
-                    )}
+                    <div className="flex items-start gap-4">
+                      <Avatar className="w-16 h-16">
+                        <AvatarImage src={task.profiles.avatar_url || ""} />
+                        <AvatarFallback className="text-lg">{task.profiles.full_name[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-medium text-lg mb-1">{task.profiles.full_name}</p>
+                        {reviewCount > 0 ? (
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 fill-primary text-primary" />
+                              <span className="font-medium">{avgRating.toFixed(1)}</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">({reviewCount} reviews)</span>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground mb-2">No reviews yet</p>
+                        )}
+                        {task.profiles.bio && (
+                          <p className="text-sm text-muted-foreground">{task.profiles.bio}</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -223,7 +255,7 @@ export default function TaskDetail() {
                       <div className="flex justify-between mb-4">
                         <span className="text-muted-foreground">Estimated Total</span>
                         <span className="text-2xl font-bold">
-                          ${(parseFloat(hours) * parseFloat(task.hourly_rate)).toFixed(2)}
+                          R{(parseFloat(hours) * parseFloat(task.hourly_rate)).toFixed(2)}
                         </span>
                       </div>
                       <Button type="submit" className="w-full" disabled={submitting}>

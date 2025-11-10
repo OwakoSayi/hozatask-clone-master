@@ -285,12 +285,12 @@ export default function TaskerProfile() {
                       id="location"
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="e.g., Nairobi, Kenya"
+                      placeholder="e.g., Johannesburg, South Africa"
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="hourly_rate">Hourly Rate (KSH)</Label>
+                    <Label htmlFor="hourly_rate">Hourly Rate (ZAR)</Label>
                     <Input
                       id="hourly_rate"
                       type="number"
@@ -298,7 +298,7 @@ export default function TaskerProfile() {
                       step="0.01"
                       value={formData.hourly_rate}
                       onChange={(e) => setFormData({ ...formData, hourly_rate: e.target.value })}
-                      placeholder="e.g., 500"
+                      placeholder="e.g., 150"
                     />
                   </div>
 
@@ -380,7 +380,7 @@ export default function TaskerProfile() {
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="space-y-1">
                         <p className="text-sm text-muted-foreground">Location: {task.location}</p>
-                        <p className="text-lg font-semibold">KSH {task.hourly_rate}/hour</p>
+                        <p className="text-lg font-semibold">R{task.hourly_rate}/hour</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Label htmlFor={`active-${task.id}`}>Active</Label>
