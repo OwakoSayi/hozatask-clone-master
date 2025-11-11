@@ -17,6 +17,8 @@ interface Task {
   location: string;
   tasker_id: string;
   category_id: string;
+  tasker_name?: string;
+  avatar_url?: string | null;
   profiles: {
     full_name: string;
     avatar_url: string | null;
@@ -90,6 +92,8 @@ export default function Browse() {
 
           return {
             ...task,
+            tasker_name: task.profiles.full_name,
+            avatar_url: task.profiles.avatar_url,
             avg_rating,
             review_count: ratings.length,
           };
@@ -136,29 +140,28 @@ export default function Browse() {
               {filteredTasks.map((task) => (
                 <Card key={task.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
-                    <div className="flex items-start gap-4">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={task.profiles.avatar_url || ""} />
-                        <AvatarFallback>{task.profiles.full_name[0]}</AvatarFallback>
+                    <div className="flex items-center gap-3 mb-3">
+                      <Avatar className="h-14 w-14 ring-2 ring-accent/20">
+                        <AvatarImage src={task.avatar_url || undefined} />
+                        <AvatarFallback className="text-lg font-semibold bg-accent/10 text-accent">
+                          {task.tasker_name?.charAt(0) || 'T'}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
-                        <CardTitle className="line-clamp-1">{task.title}</CardTitle>
-                        <CardDescription className="flex items-center gap-1 mt-1">
-                          <span className="font-medium">{task.categories.name}</span>
-                        </CardDescription>
-                        <div className="flex items-center gap-1 mt-1">
-                          {task.review_count! > 0 ? (
-                            <>
-                              <Star className="w-4 h-4 fill-primary text-primary" />
-                              <span className="text-sm font-medium">{task.avg_rating?.toFixed(1)}</span>
-                              <span className="text-sm text-muted-foreground">({task.review_count})</span>
-                            </>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">No reviews yet</span>
-                          )}
-                        </div>
+                        <p className="font-semibold text-base">{task.tasker_name}</p>
+                        {task.avg_rating && (
+                          <div className="flex items-center gap-1.5">
+                            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                            <span className="font-medium">{task.avg_rating.toFixed(1)}</span>
+                            <span className="text-sm text-muted-foreground">({task.review_count} reviews)</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+                    <CardTitle className="line-clamp-1">{task.title}</CardTitle>
+                    <CardDescription className="flex items-center gap-1 mt-1">
+                      <span className="font-medium">{task.categories.name}</span>
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground line-clamp-2">
@@ -172,9 +175,6 @@ export default function Browse() {
                       <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-muted-foreground" />
                         <span>{task.location}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <span>By {task.profiles.full_name}</span>
                       </div>
                     </div>
                     <Button 

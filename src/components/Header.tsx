@@ -51,15 +51,15 @@ export const Header = () => {
               )}
               {!user && (
                 <>
-                  <a href="#services" className="text-sm font-medium hover:text-primary transition-colors">
+                  <button onClick={() => navigate("/services")} className="text-sm font-medium hover:text-primary transition-colors">
                     Services
-                  </a>
-                  <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
+                  </button>
+                  <button onClick={() => navigate("/how-it-works")} className="text-sm font-medium hover:text-primary transition-colors">
                     How it Works
-                  </a>
-                  <a href="#become-tasker" className="text-sm font-medium hover:text-primary transition-colors">
+                  </button>
+                  <button onClick={() => navigate("/become-tasker")} className="text-sm font-medium hover:text-primary transition-colors">
                     Become a Tasker
-                  </a>
+                  </button>
                 </>
               )}
             </nav>
