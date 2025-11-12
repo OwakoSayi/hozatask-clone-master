@@ -9,6 +9,7 @@ import Browse from "./pages/Browse";
 import TaskDetail from "./pages/TaskDetail";
 import Dashboard from "./pages/Dashboard";
 import TaskerProfile from "./pages/TaskerProfile";
+import ProfileEdit from "./pages/ProfileEdit";
 import Review from "./pages/Review";
 import AdminVerifications from "./pages/AdminVerifications";
 import HowItWorks from "./pages/HowItWorks";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/task/:id" element={<TaskDetail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/tasker-profile" element={<TaskerProfile />} />
+          <Route path="/profile/edit" element={<ProfileEdit />} />
           <Route path="/review/:bookingId" element={<Review />} />
           <Route path="/admin/verifications" element={<AdminVerifications />} />
           <Route path="/how-it-works" element={<HowItWorks />} />
