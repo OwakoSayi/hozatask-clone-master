@@ -8,18 +8,43 @@ import { toast } from "sonner";
 export const Header = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    try {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin" as any)
+        .maybeSingle();
+      
+      setIsAdmin(!!data);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+    }
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -50,6 +75,11 @@ export const Header = () => {
                   <button onClick={() => navigate("/profile/edit")} className="text-sm font-medium hover:text-primary transition-colors">
                     Edit Profile
                   </button>
+                  {isAdmin && (
+                    <button onClick={() => navigate("/admin/verifications")} className="text-sm font-medium hover:text-primary transition-colors">
+                      Admin
+                    </button>
+                  )}
                 </>
               )}
               {!user && (
