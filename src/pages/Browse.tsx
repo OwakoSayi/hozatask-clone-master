@@ -141,7 +141,13 @@ export default function Browse() {
                 <Card key={task.id} className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <div className="flex items-center gap-3 mb-3">
-                      <Avatar className="h-14 w-14 ring-2 ring-accent/20">
+                      <Avatar 
+                        className="h-14 w-14 ring-2 ring-accent/20 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/tasker/${task.tasker_id}`);
+                        }}
+                      >
                         <AvatarImage src={task.avatar_url || undefined} />
                         <AvatarFallback className="text-lg font-semibold bg-accent/10 text-accent">
                           {task.tasker_name?.charAt(0) || 'T'}

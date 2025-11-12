@@ -178,7 +178,10 @@ export default function TaskDetail() {
                       About the Tasker
                     </h3>
                     <div className="flex items-start gap-4">
-                      <Avatar className="w-16 h-16">
+                      <Avatar 
+                        className="w-16 h-16 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={() => navigate(`/tasker/${task.tasker_id}`)}
+                      >
                         <AvatarImage src={task.profiles.avatar_url || ""} />
                         <AvatarFallback className="text-lg">{task.profiles.full_name[0]}</AvatarFallback>
                       </Avatar>
