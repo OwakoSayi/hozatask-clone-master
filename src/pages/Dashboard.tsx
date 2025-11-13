@@ -205,12 +205,23 @@ export default function Dashboard() {
             </Button>
           )}
           {!isTasker && booking.status === "completed" && (
-            <Button
-              size="sm"
-              onClick={() => navigate(`/review/${booking.id}`)}
-            >
-              Leave Review
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  toast.success("Task completion confirmed!");
+                }}
+              >
+                Confirm Completion
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => navigate(`/review/${booking.id}`)}
+              >
+                Leave Review
+              </Button>
+            </>
           )}
         </div>
       </CardContent>
