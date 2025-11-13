@@ -267,15 +267,57 @@ export type Database = {
           },
         ]
       }
+      verifications: {
+        Row: {
+          admin_notes: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          id_document_url: string
+          phone: string | null
+          proof_document_url: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          id_document_url: string
+          phone?: string | null
+          proof_document_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          id_document_url?: string
+          phone?: string | null
+          proof_document_url?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "client" | "tasker"
+      app_role: "client" | "tasker" | "admin" | "moderator" | "user"
       booking_status:
         | "pending"
         | "accepted"
@@ -409,7 +451,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["client", "tasker"],
+      app_role: ["client", "tasker", "admin", "moderator", "user"],
       booking_status: [
         "pending",
         "accepted",
