@@ -1,1 +1,7 @@
 project_id = "uxmdbznodlamunpjiggn"
+
+[functions.auth]
+verify_jwt = false
+
+[functions.webhooks-paypal]
+verify_jwt = false
