@@ -4,18 +4,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Browse from "./pages/Browse";
-import TaskDetail from "./pages/TaskDetail";
-import Dashboard from "./pages/Dashboard";
-import TaskerProfile from "./pages/TaskerProfile";
-import TaskerPublicProfile from "./pages/TaskerPublicProfile";
-import ProfileEdit from "./pages/ProfileEdit";
-import Review from "./pages/Review";
-import AdminVerifications from "./pages/AdminVerifications";
-import HowItWorks from "./pages/HowItWorks";
-import BecomeTasker from "./pages/BecomeTasker";
-import Services from "./pages/Services";
+import CategoryListings from "./pages/CategoryListings";
+import BookingForm from "./pages/BookingForm";
+import BookingConfirmation from "./pages/BookingConfirmation";
+import SupplierSubmission from "./pages/SupplierSubmission";
+import AdminAuth from "./pages/AdminAuth";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,19 +22,12 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/browse" element={<Browse />} />
-          <Route path="/task/:id" element={<TaskDetail />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/tasker-profile" element={<TaskerProfile />} />
-          <Route path="/tasker/:id" element={<TaskerPublicProfile />} />
-          <Route path="/profile/edit" element={<ProfileEdit />} />
-          <Route path="/review/:bookingId" element={<Review />} />
-          <Route path="/admin/verifications" element={<AdminVerifications />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/become-tasker" element={<BecomeTasker />} />
-          <Route path="/services" element={<Services />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/category/:category" element={<CategoryListings />} />
+          <Route path="/booking" element={<BookingForm />} />
+          <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+          <Route path="/supplier-submission" element={<SupplierSubmission />} />
+          <Route path="/admin/login" element={<AdminAuth />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
