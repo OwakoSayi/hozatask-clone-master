@@ -134,7 +134,7 @@ const BrowseServices = () => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (selectedIds.length === 0) {
       toast({
         title: "Selection Required",
@@ -142,6 +142,19 @@ const BrowseServices = () => {
       });
       return;
     }
+
+    // Check if user is authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login or sign up to continue with your booking",
+      });
+      navigate("/auth", { state: { returnTo: "/booking", selectedIds } });
+      return;
+    }
+
     navigate("/booking", { state: { selectedIds } });
   };
 

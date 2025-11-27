@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,20 @@ const BookingForm = () => {
   });
 
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Authentication Required",
+          description: "Please login to access booking",
+        });
+        navigate("/auth", { state: { returnTo: "/booking", selectedIds } });
+      }
+    };
+    checkAuth();
+  }, [navigate, selectedIds, toast]);
 
   if (selectedIds.length === 0) {
     navigate("/");
