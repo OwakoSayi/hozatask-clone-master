@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Star, TrendingUp, DollarSign, CheckCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CardDescription } from "@/components/ui/card";
 
 interface Supplier {
   id: string;
@@ -31,6 +31,8 @@ interface Supplier {
   images: string[] | null;
   location: string | null;
   status: string;
+  title: string;
+  category: string;
 }
 
 interface ServiceOption {
@@ -50,10 +52,13 @@ const SupplierDashboard = () => {
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [stats, setStats] = useState({ completed: 0, pending: 0, rating: 0 });
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceOption | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -87,7 +92,6 @@ const SupplierDashboard = () => {
         return;
       }
 
-      // Get supplier profile for current user
       const { data: supplierData, error: supplierError } = await supabase
         .from("suppliers")
         .select("*")
@@ -114,7 +118,6 @@ const SupplierDashboard = () => {
 
       setSupplier(supplierData);
       
-      // Set profile form data
       setProfileData({
         business_name: supplierData.business_name || "",
         contact_name: supplierData.contact_name || "",
@@ -125,7 +128,6 @@ const SupplierDashboard = () => {
         images: supplierData.images ? supplierData.images.join(", ") : "",
       });
 
-      // Load service options
       const { data: optionsData, error: optionsError } = await supabase
         .from("service_options")
         .select("*")
@@ -135,7 +137,6 @@ const SupplierDashboard = () => {
       if (optionsError) throw optionsError;
       setServiceOptions(optionsData || []);
 
-      // Load bookings for this supplier
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select("*")
@@ -144,6 +145,24 @@ const SupplierDashboard = () => {
 
       if (bookingsError) throw bookingsError;
       setBookings(bookingsData || []);
+
+      const { data: reviewsData, error: reviewsError } = await supabase
+        .from("reviews")
+        .select("*")
+        .eq("supplier_id", supplierData.id)
+        .order("created_at", { ascending: false });
+
+      if (reviewsError) throw reviewsError;
+      setReviews(reviewsData || []);
+
+      // Calculate stats
+      const completed = bookingsData?.filter(b => b.status === "Completed").length || 0;
+      const pending = bookingsData?.filter(b => b.status === "New" || b.status === "InProgress").length || 0;
+      const avgRating = reviewsData && reviewsData.length > 0
+        ? reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length
+        : 0;
+
+      setStats({ completed, pending, rating: avgRating });
     } catch (error) {
       console.error("Error loading supplier data:", error);
       toast({
@@ -153,6 +172,71 @@ const SupplierDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid File",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      // Add to existing images
+      const currentImages = profileData.images ? profileData.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+      currentImages.unshift(publicUrl);
+      setProfileData({ ...profileData, images: currentImages.join(', ') });
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -175,7 +259,7 @@ const SupplierDashboard = () => {
         location_area: formData.location_area,
         images: imagesArray,
         is_active: true,
-        category: supplier.business_name, // Using business name as category for now
+        category: supplier.category,
       };
 
       if (editingService) {
@@ -330,381 +414,458 @@ const SupplierDashboard = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground">Loading dashboard...</p>
       </div>
     );
   }
 
+  const profileImage = supplier?.images?.[0] || "/placeholder.svg";
+  const initials = supplier?.business_name.substring(0, 2).toUpperCase() || "SP";
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Supplier Dashboard</h1>
-            <p className="text-muted-foreground">
-              {supplier?.business_name}
-            </p>
+      <div className="container mx-auto px-4 py-8 flex-1 max-w-7xl">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-16 w-16 border-2 border-primary/20">
+              <AvatarImage src={profileImage} alt={supplier?.business_name} />
+              <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">{supplier?.business_name}</h1>
+              <p className="text-muted-foreground">{supplier?.title}</p>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Profile
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Edit Supplier Profile</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div>
-                    <Label htmlFor="business_name">Business Name</Label>
-                    <Input
-                      id="business_name"
-                      value={profileData.business_name}
-                      onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="contact_name">Contact Name</Label>
-                    <Input
-                      id="contact_name"
-                      value={profileData.contact_name}
-                      onChange={(e) => setProfileData({ ...profileData, contact_name: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={profileData.phone}
-                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="whatsapp">WhatsApp</Label>
-                      <Input
-                        id="whatsapp"
-                        value={profileData.whatsapp}
-                        onChange={(e) => setProfileData({ ...profileData, whatsapp: e.target.value })}
-                        placeholder="Optional"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="profile_description">About Your Business</Label>
-                    <Textarea
-                      id="profile_description"
-                      value={profileData.description}
-                      onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
-                      rows={4}
-                      placeholder="Tell clients about your business..."
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      value={profileData.location}
-                      onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
-                      placeholder="e.g., Johannesburg, South Africa"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="profile_images">Profile Image URLs (comma separated)</Label>
-                    <Textarea
-                      id="profile_images"
-                      value={profileData.images}
-                      onChange={(e) => setProfileData({ ...profileData, images: e.target.value })}
-                      placeholder="https://example.com/logo.jpg, https://example.com/shop.jpg"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setProfileDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button type="submit">
-                      Update Profile
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => {
-                setEditingService(null);
-                setFormData({
-                  title: "",
-                  description: "",
-                  price_min: "",
-                  price_max: "",
-                  location_area: "",
-                  images: "",
-                });
-              }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Service
+              <Button variant="outline" size="lg">
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Profile
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
-                  {editingService ? "Edit Service" : "Add New Service"}
-                </DialogTitle>
+                <DialogTitle>Edit Your Profile</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleProfileSubmit} className="space-y-4">
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <Avatar className="h-24 w-24 border-2 border-primary/20">
+                    <AvatarImage src={profileImage} alt={supplier?.business_name} />
+                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Input
+                      id="profile-image"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                    />
+                    <Label htmlFor="profile-image" className="cursor-pointer">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={uploadingImage}
+                        onClick={() => document.getElementById('profile-image')?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {uploadingImage ? "Uploading..." : "Upload Photo"}
+                      </Button>
+                    </Label>
+                  </div>
+                </div>
                 <div>
-                  <Label htmlFor="title">Service Title</Label>
+                  <Label htmlFor="business_name">Business Name</Label>
                   <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    id="business_name"
+                    value={profileData.business_name}
+                    onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={4}
+                  <Label htmlFor="contact_name">Your Name</Label>
+                  <Input
+                    id="contact_name"
+                    value={profileData.contact_name}
+                    onChange={(e) => setProfileData({ ...profileData, contact_name: e.target.value })}
+                    required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="price_min">Min Price (R)</Label>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <Input
-                      id="price_min"
-                      type="number"
-                      value={formData.price_min}
-                      onChange={(e) => setFormData({ ...formData, price_min: e.target.value })}
+                      id="phone"
+                      value={profileData.phone}
+                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="price_max">Max Price (R)</Label>
+                    <Label htmlFor="whatsapp">WhatsApp Number</Label>
                     <Input
-                      id="price_max"
-                      type="number"
-                      value={formData.price_max}
-                      onChange={(e) => setFormData({ ...formData, price_max: e.target.value })}
-                      required
+                      id="whatsapp"
+                      value={profileData.whatsapp}
+                      onChange={(e) => setProfileData({ ...profileData, whatsapp: e.target.value })}
+                      placeholder="Optional"
                     />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="location_area">Location</Label>
-                  <Input
-                    id="location_area"
-                    value={formData.location_area}
-                    onChange={(e) => setFormData({ ...formData, location_area: e.target.value })}
-                    placeholder="e.g., Johannesburg, South Africa"
+                  <Label htmlFor="profile_description">About Your Business</Label>
+                  <Textarea
+                    id="profile_description"
+                    value={profileData.description}
+                    onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+                    rows={4}
+                    placeholder="Tell clients about your experience, skills, and what makes you stand out..."
                   />
                 </div>
                 <div>
-                  <Label htmlFor="images">Image URLs (comma separated)</Label>
-                  <Textarea
-                    id="images"
-                    value={formData.images}
-                    onChange={(e) => setFormData({ ...formData, images: e.target.value })}
-                    placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                    rows={3}
+                  <Label htmlFor="location">Service Location</Label>
+                  <Input
+                    id="location"
+                    value={profileData.location}
+                    onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                    placeholder="e.g., Johannesburg, Gauteng"
                   />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 pt-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setDialogOpen(false)}
+                    onClick={() => setProfileDialogOpen(false)}
                   >
                     Cancel
                   </Button>
                   <Button type="submit">
-                    {editingService ? "Update" : "Add"} Service
+                    Save Changes
                   </Button>
                 </div>
               </form>
             </DialogContent>
           </Dialog>
-          </div>
         </div>
 
-        <Tabs defaultValue="profile" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="profile">Profile</TabsTrigger>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="border-border shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Completed Jobs</p>
+                  <p className="text-3xl font-bold text-foreground">{stats.completed}</p>
+                </div>
+                <CheckCircle className="h-10 w-10 text-accent" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Pending Bookings</p>
+                  <p className="text-3xl font-bold text-foreground">{stats.pending}</p>
+                </div>
+                <TrendingUp className="h-10 w-10 text-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Average Rating</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {stats.rating > 0 ? stats.rating.toFixed(1) : "N/A"}
+                  </p>
+                </div>
+                <Star className="h-10 w-10 text-primary fill-primary" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-border shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Services</p>
+                  <p className="text-3xl font-bold text-foreground">
+                    {serviceOptions.filter(s => s.is_active).length}
+                  </p>
+                </div>
+                <DollarSign className="h-10 w-10 text-accent" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tabs Section */}
+        <Tabs defaultValue="services" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger value="services">My Services</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="profile" className="mt-6">
-            <Card>
+          {/* Services Tab */}
+          <TabsContent value="services">
+            <Card className="border-border shadow-sm">
               <CardHeader>
-                <CardTitle>Business Profile</CardTitle>
-                <CardDescription>Your supplier profile information</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Your Services</CardTitle>
+                    <CardDescription>Manage your service offerings</CardDescription>
+                  </div>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button onClick={() => {
+                        setEditingService(null);
+                        setFormData({
+                          title: "",
+                          description: "",
+                          price_min: "",
+                          price_max: "",
+                          location_area: "",
+                          images: "",
+                        });
+                      }}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Service
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>
+                          {editingService ? "Edit Service" : "Add New Service"}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                          <Label htmlFor="title">Service Title</Label>
+                          <Input
+                            id="title"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder="e.g., Plumbing Repair"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="description">Description</Label>
+                          <Textarea
+                            id="description"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            rows={4}
+                            placeholder="Describe what this service includes..."
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label htmlFor="price_min">Starting Price (R)</Label>
+                            <Input
+                              id="price_min"
+                              type="number"
+                              value={formData.price_min}
+                              onChange={(e) => setFormData({ ...formData, price_min: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="price_max">Max Price (R)</Label>
+                            <Input
+                              id="price_max"
+                              type="number"
+                              value={formData.price_max}
+                              onChange={(e) => setFormData({ ...formData, price_max: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="location_area">Service Area</Label>
+                          <Input
+                            id="location_area"
+                            value={formData.location_area}
+                            onChange={(e) => setFormData({ ...formData, location_area: e.target.value })}
+                            placeholder="e.g., Sandton, Johannesburg"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDialogOpen(false)}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit">
+                            {editingService ? "Update" : "Add"} Service
+                          </Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h3 className="font-semibold mb-1">Business Name</h3>
-                  <p className="text-muted-foreground">{supplier?.business_name}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Contact Name</h3>
-                  <p className="text-muted-foreground">{supplier?.contact_name}</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-1">Phone</h3>
-                    <p className="text-muted-foreground">{supplier?.phone}</p>
+              <CardContent>
+                {serviceOptions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground mb-4">No services yet</p>
+                    <p className="text-sm text-muted-foreground">Add your first service to start receiving bookings</p>
                   </div>
-                  {supplier?.whatsapp && (
-                    <div>
-                      <h3 className="font-semibold mb-1">WhatsApp</h3>
-                      <p className="text-muted-foreground">{supplier.whatsapp}</p>
-                    </div>
-                  )}
-                </div>
-                {supplier?.description && (
-                  <div>
-                    <h3 className="font-semibold mb-1">About</h3>
-                    <p className="text-muted-foreground">{supplier.description}</p>
-                  </div>
-                )}
-                {supplier?.location && (
-                  <div>
-                    <h3 className="font-semibold mb-1">Location</h3>
-                    <p className="text-muted-foreground">{supplier.location}</p>
+                ) : (
+                  <div className="space-y-4">
+                    {serviceOptions.map((service) => (
+                      <Card key={service.id} className="border-border">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-2">
+                                <h3 className="font-semibold text-lg text-foreground">{service.title}</h3>
+                                <Badge variant={service.is_active ? "default" : "secondary"}>
+                                  {service.is_active ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
+                              <p className="font-semibold text-foreground">
+                                R{service.price_min} - R{service.price_max}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEdit(service)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleToggleActive(service.id, service.is_active)}
+                              >
+                                {service.is_active ? "Deactivate" : "Activate"}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDelete(service.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="services" className="mt-6">
-        {serviceOptions.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                You haven't added any services yet
-              </p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Service
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {serviceOptions.map((service) => (
-              <Card key={service.id}>
-                {service.images && service.images.length > 0 && (
-                  <img
-                    src={service.images[0]}
-                    alt={service.title}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                )}
-                <CardHeader>
-                  <CardTitle className="text-lg">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {service.description}
-                  </p>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="font-semibold">
-                      R{service.price_min} - R{service.price_max}
-                    </span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      service.is_active ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"
-                    }`}>
-                      {service.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEdit(service)}
-                      className="flex-1"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleToggleActive(service.id, service.is_active)}
-                      className="flex-1"
-                    >
-                      {service.is_active ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleDelete(service.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-          </TabsContent>
-
-          <TabsContent value="bookings" className="mt-6">
-            <Card>
+          {/* Bookings Tab */}
+          <TabsContent value="bookings">
+            <Card className="border-border shadow-sm">
               <CardHeader>
-                <CardTitle>Received Bookings</CardTitle>
-                <CardDescription>Manage bookings from customers</CardDescription>
+                <CardTitle>Your Bookings</CardTitle>
+                <CardDescription>Manage incoming requests</CardDescription>
               </CardHeader>
               <CardContent>
                 {bookings.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No bookings yet
-                  </p>
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No bookings yet</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {bookings.map((booking) => (
-                      <Card key={booking.id}>
-                        <CardContent className="pt-6">
-                          <div className="flex justify-between items-start mb-4">
+                      <Card key={booking.id} className="border-border">
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start">
                             <div>
-                              <h3 className="font-semibold">{booking.customer_name}</h3>
-                              <p className="text-sm text-muted-foreground">{booking.email}</p>
+                              <p className="font-semibold text-foreground">{booking.customer_name}</p>
                               <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {new Date(booking.event_date).toLocaleDateString()}
+                              </p>
+                              {booking.notes && (
+                                <p className="text-sm text-muted-foreground mt-2">{booking.notes}</p>
+                              )}
                             </div>
-                            <Badge className={
-                              booking.status === "Completed" ? "bg-green-500" :
-                              booking.status === "Confirmed" ? "bg-blue-500" :
-                              "bg-yellow-500"
+                            <Badge variant={
+                              booking.status === "Completed" ? "default" :
+                              booking.status === "New" ? "secondary" : "outline"
                             }>
                               {booking.status}
                             </Badge>
                           </div>
-                          <div className="space-y-2 text-sm">
-                            <p><strong>Event Date:</strong> {new Date(booking.event_date).toLocaleDateString()}</p>
-                            <p><strong>Event Time:</strong> {booking.event_time}</p>
-                            <p><strong>Location:</strong> {booking.address}</p>
-                            {booking.notes && <p><strong>Notes:</strong> {booking.notes}</p>}
-                            <p className="text-xs text-muted-foreground">
-                              Booked on {new Date(booking.created_at).toLocaleDateString()}
-                            </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Reviews Tab */}
+          <TabsContent value="reviews">
+            <Card className="border-border shadow-sm">
+              <CardHeader>
+                <CardTitle>Customer Reviews</CardTitle>
+                <CardDescription>See what your clients say</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {reviews.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">No reviews yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <Card key={review.id} className="border-border">
+                        <CardContent className="p-4">
+                          <div className="flex items-start gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {review.customer_name.substring(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="font-semibold text-foreground">{review.customer_name}</p>
+                                <div className="flex items-center gap-1">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`h-4 w-4 ${
+                                        i < review.rating
+                                          ? "fill-primary text-primary"
+                                          : "text-muted-foreground/30"
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(review.created_at).toLocaleDateString()}
+                              </p>
+                              {review.comment && (
+                                <p className="text-foreground mt-2">{review.comment}</p>
+                              )}
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
