@@ -33,6 +33,7 @@ interface Supplier {
   status: string;
   min_price: number;
   max_price: number;
+  images: string[];
 }
 
 const AdminDashboard = () => {
@@ -286,6 +287,22 @@ const AdminDashboard = () => {
                       <span className="text-muted-foreground">Price Range:</span> R{supplier.min_price} - R{supplier.max_price}
                     </div>
                   </div>
+
+                  {supplier.images && supplier.images.length > 0 && (
+                    <div>
+                      <p className="text-sm font-semibold mb-2 text-muted-foreground">Service Images:</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {supplier.images.map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Service ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border border-border"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex gap-2">
                     <Button
