@@ -15,7 +15,10 @@ export const Header = () => {
         </h1>
         <nav className="flex gap-4">
           <Button variant="ghost" onClick={() => navigate("/browse")}>
-            Browse
+            Browse Services
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/suppliers")}>
+            Suppliers
           </Button>
           <Button variant="ghost" onClick={() => navigate("/supplier-submission")}>
             List Service

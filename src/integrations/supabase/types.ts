@@ -103,6 +103,51 @@ export type Database = {
           },
         ]
       }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          rating: number
+          supplier_id: string
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          rating: number
+          supplier_id: string
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          rating?: number
+          supplier_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_options: {
         Row: {
           category: string
@@ -168,6 +213,7 @@ export type Database = {
           phone: string
           status: Database["public"]["Enums"]["supplier_status"] | null
           title: string
+          user_id: string | null
           whatsapp: string | null
         }
         Insert: {
@@ -184,6 +230,7 @@ export type Database = {
           phone: string
           status?: Database["public"]["Enums"]["supplier_status"] | null
           title: string
+          user_id?: string | null
           whatsapp?: string | null
         }
         Update: {
@@ -200,6 +247,7 @@ export type Database = {
           phone?: string
           status?: Database["public"]["Enums"]["supplier_status"] | null
           title?: string
+          user_id?: string | null
           whatsapp?: string | null
         }
         Relationships: []

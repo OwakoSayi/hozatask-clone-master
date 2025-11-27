@@ -10,6 +10,12 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 
+interface ServiceOption {
+  id: string;
+  title: string;
+  supplier_id: string;
+}
+
 const BookingForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,6 +34,7 @@ const BookingForm = () => {
   });
 
   const [submitting, setSubmitting] = useState(false);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,6 +45,19 @@ const BookingForm = () => {
           description: "Please login to access booking",
         });
         navigate("/auth", { state: { returnTo: "/booking", selectedIds } });
+        return;
+      }
+
+      // Load service options to show supplier info
+      if (selectedIds.length > 0) {
+        const { data, error } = await supabase
+          .from("service_options")
+          .select("id, title, supplier_id")
+          .in("id", selectedIds);
+
+        if (!error && data) {
+          setServiceOptions(data);
+        }
       }
     };
     checkAuth();
@@ -101,6 +121,30 @@ const BookingForm = () => {
         <Button variant="outline" onClick={() => navigate(-1)} className="mb-6">
           ← Back
         </Button>
+
+        {serviceOptions.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Selected Services</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {serviceOptions.map((service) => (
+                  <div key={service.id} className="flex items-center justify-between p-3 bg-muted/30 rounded">
+                    <span>{service.title}</span>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => navigate(`/supplier/${service.supplier_id}`)}
+                    >
+                      View Supplier Profile
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
