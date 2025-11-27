@@ -199,7 +199,7 @@ const AdminDashboard = () => {
 
       toast({
         title: "Success",
-        description: "Supplier updated successfully",
+        description: `Supplier ${status === "Active" ? "approved" : "updated"} successfully`,
       });
 
       loadData();
@@ -208,6 +208,42 @@ const AdminDashboard = () => {
       toast({
         title: "Error",
         description: "Failed to update supplier",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteSupplier = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this supplier? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      // First delete associated service options
+      await supabase
+        .from("service_options")
+        .delete()
+        .eq("supplier_id", id);
+
+      // Then delete the supplier
+      const { error } = await supabase
+        .from("suppliers")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Supplier deleted successfully",
+      });
+
+      loadData();
+    } catch (error) {
+      console.error("Error deleting supplier:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete supplier",
         variant: "destructive",
       });
     }
@@ -335,7 +371,9 @@ const AdminDashboard = () => {
                       <CardTitle>{supplier.business_name}</CardTitle>
                       <p className="text-sm text-muted-foreground">{supplier.category}</p>
                     </div>
-                    <Badge>{supplier.status}</Badge>
+                    <Badge variant={supplier.status === "Active" ? "default" : supplier.status === "Pending" ? "secondary" : "outline"}>
+                      {supplier.status === "Active" ? "Approved" : supplier.status}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -374,14 +412,22 @@ const AdminDashboard = () => {
                       onClick={() => updateSupplierStatus(supplier.id, "Active")}
                       disabled={supplier.status === "Active"}
                     >
-                      Approve
+                      {supplier.status === "Active" ? "Approved" : "Approve"}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => updateSupplierStatus(supplier.id, "Inactive")}
+                      disabled={supplier.status === "Inactive"}
                     >
                       Deactivate
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => deleteSupplier(supplier.id)}
+                    >
+                      Delete
                     </Button>
                   </div>
                 </CardContent>
