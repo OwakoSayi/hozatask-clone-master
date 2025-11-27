@@ -17,6 +17,7 @@ import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSetup from "./pages/AdminSetup";
 import CustomerAccount from "./pages/CustomerAccount";
+import SupplierAccountLink from "./pages/SupplierAccountLink";
 
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/my-account" element={<CustomerAccount />} />
+          <Route path="/link-supplier-account" element={<SupplierAccountLink />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
