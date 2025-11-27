@@ -14,7 +14,7 @@ export const Header = () => {
           HozaTask
         </h1>
         <nav className="flex gap-4">
-          <Button variant="ghost" onClick={() => navigate("/")}>
+          <Button variant="ghost" onClick={() => navigate("/browse")}>
             Browse
           </Button>
           <Button variant="ghost" onClick={() => navigate("/supplier-submission")}>
