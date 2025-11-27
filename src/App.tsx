@@ -11,6 +11,7 @@ import SupplierSubmission from "./pages/SupplierSubmission";
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSetup from "./pages/AdminSetup";
+import AdminMFASetup from "./pages/AdminMFASetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/booking-confirmation" element={<BookingConfirmation />} />
           <Route path="/supplier-submission" element={<SupplierSubmission />} />
           <Route path="/admin/setup" element={<AdminSetup />} />
+          <Route path="/admin/mfa-setup" element={<AdminMFASetup />} />
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
