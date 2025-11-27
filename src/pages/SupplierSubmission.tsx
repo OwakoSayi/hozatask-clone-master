@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+import { Upload, X, Loader2 } from "lucide-react";
 
 const categories = [
   "Jumping Castles", "Makeup", "Event Décor", "Grass Cutting", 
@@ -18,6 +20,8 @@ const categories = [
 const SupplierSubmission = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -32,7 +36,95 @@ const SupplierSubmission = () => {
     description: "",
   });
 
+  const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const totalSteps = 4;
+  const progress = (currentStep / totalSteps) * 100;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (images.length + files.length > 10) {
+      toast({
+        title: "Too many images",
+        description: "You can upload a maximum of 10 images.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      const uploadedUrls: string[] = [];
+
+      for (const file of Array.from(files)) {
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const filePath = `supplier-images/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+
+      setImages([...images, ...uploadedUrls]);
+      toast({
+        title: "Images uploaded",
+        description: `${uploadedUrls.length} image(s) uploaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+  };
+
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.business_name && formData.contact_name && formData.phone;
+      case 2:
+        return formData.category && formData.title && formData.location;
+      case 3:
+        return formData.min_price && formData.max_price;
+      case 4:
+        return formData.description;
+      default:
+        return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +142,7 @@ const SupplierSubmission = () => {
         min_price: parseFloat(formData.min_price),
         max_price: parseFloat(formData.max_price),
         description: formData.description,
+        images: images.length > 0 ? images : null,
         status: "Pending",
       });
 
@@ -73,6 +166,229 @@ const SupplierSubmission = () => {
     }
   };
 
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+            </div>
+            <div>
+              <Label htmlFor="business_name">Business Name *</Label>
+              <Input
+                id="business_name"
+                required
+                value={formData.business_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, business_name: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="contact_name">Contact Person *</Label>
+              <Input
+                id="contact_name"
+                required
+                value={formData.contact_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, contact_name: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="whatsapp">WhatsApp Number</Label>
+                <Input
+                  id="whatsapp"
+                  type="tel"
+                  value={formData.whatsapp}
+                  onChange={(e) =>
+                    setFormData({ ...formData, whatsapp: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Service Details</h3>
+            </div>
+            <div>
+              <Label htmlFor="category">Service Category *</Label>
+              <select
+                id="category"
+                required
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground"
+                value={formData.category}
+                onChange={(e) =>
+                  setFormData({ ...formData, category: e.target.value })
+                }
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <Label htmlFor="title">Service Title *</Label>
+              <Input
+                id="title"
+                required
+                placeholder="e.g., Premium Jumping Castle Rental"
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="location">Location/Area *</Label>
+              <Input
+                id="location"
+                required
+                placeholder="e.g., Johannesburg, Cape Town"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData({ ...formData, location: e.target.value })
+                }
+              />
+            </div>
+          </div>
+        );
+
+      case 3:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Pricing</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="min_price">Minimum Price (R) *</Label>
+                <Input
+                  id="min_price"
+                  type="number"
+                  required
+                  value={formData.min_price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, min_price: e.target.value })
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="max_price">Maximum Price (R) *</Label>
+                <Input
+                  id="max_price"
+                  type="number"
+                  required
+                  value={formData.max_price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, max_price: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Description & Images</h3>
+            </div>
+            <div>
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                required
+                rows={4}
+                placeholder="Describe your service, what makes it special, and what's included..."
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Service Images (Up to 10)</Label>
+              <div className="mt-2">
+                <label
+                  htmlFor="image-upload"
+                  className="flex items-center justify-center w-full h-32 border-2 border-dashed border-input rounded-md cursor-pointer hover:border-primary transition-colors"
+                >
+                  {uploading ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <Upload className="w-8 h-8" />
+                      <span className="text-sm">Click to upload images</span>
+                      <span className="text-xs">PNG, JPG up to 10 images</span>
+                    </div>
+                  )}
+                </label>
+                <input
+                  id="image-upload"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleImageUpload}
+                  disabled={uploading || images.length >= 10}
+                />
+              </div>
+              {images.length > 0 && (
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  {images.map((url, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-24 object-cover rounded-md"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -86,155 +402,51 @@ const SupplierSubmission = () => {
           <CardHeader>
             <CardTitle className="text-2xl">List Your Service</CardTitle>
             <p className="text-muted-foreground">
-              Join our marketplace and connect with customers across South Africa
+              Step {currentStep} of {totalSteps}
             </p>
+            <Progress value={progress} className="mt-2" />
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="business_name">Business Name *</Label>
-                <Input
-                  id="business_name"
-                  required
-                  value={formData.business_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, business_name: e.target.value })
-                  }
-                />
+              {renderStep()}
+
+              <div className="flex gap-4 pt-4">
+                {currentStep > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleBack}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                )}
+                
+                {currentStep < totalSteps ? (
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={!canProceed()}
+                    className="flex-1"
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    disabled={submitting || !canProceed()}
+                    className="flex-1"
+                  >
+                    {submitting ? "Submitting..." : "Submit Listing"}
+                  </Button>
+                )}
               </div>
 
-              <div>
-                <Label htmlFor="contact_name">Contact Person *</Label>
-                <Input
-                  id="contact_name"
-                  required
-                  value={formData.contact_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contact_name: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                  <Input
-                    id="whatsapp"
-                    type="tel"
-                    value={formData.whatsapp}
-                    onChange={(e) =>
-                      setFormData({ ...formData, whatsapp: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="location">Location/Area *</Label>
-                <Input
-                  id="location"
-                  required
-                  placeholder="e.g., Johannesburg, Cape Town"
-                  value={formData.location}
-                  onChange={(e) =>
-                    setFormData({ ...formData, location: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="category">Service Category *</Label>
-                <select
-                  id="category"
-                  required
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground"
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <Label htmlFor="title">Service Title *</Label>
-                <Input
-                  id="title"
-                  required
-                  placeholder="e.g., Premium Jumping Castle Rental"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="min_price">Minimum Price (R) *</Label>
-                  <Input
-                    id="min_price"
-                    type="number"
-                    required
-                    value={formData.min_price}
-                    onChange={(e) =>
-                      setFormData({ ...formData, min_price: e.target.value })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="max_price">Maximum Price (R) *</Label>
-                  <Input
-                    id="max_price"
-                    type="number"
-                    required
-                    value={formData.max_price}
-                    onChange={(e) =>
-                      setFormData({ ...formData, max_price: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  required
-                  rows={4}
-                  placeholder="Describe your service, what makes it special, and what's included..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-
-              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                {submitting ? "Submitting..." : "Submit Listing"}
-              </Button>
-
-              <p className="text-sm text-muted-foreground text-center">
-                After submission, our team will review your listing and contact you within 24 hours.
-              </p>
+              {currentStep === totalSteps && (
+                <p className="text-sm text-muted-foreground text-center">
+                  After submission, our team will review your listing and contact you within 24 hours.
+                </p>
+              )}
             </form>
           </CardContent>
         </Card>
