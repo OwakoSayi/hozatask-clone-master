@@ -126,12 +126,76 @@ const AdminDashboard = () => {
 
   const updateSupplierStatus = async (id: string, status: "Active" | "Inactive" | "Pending") => {
     try {
-      const { error } = await supabase
+      // Get the supplier details
+      const { data: supplier, error: fetchError } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update supplier status
+      const { error: updateError } = await supabase
         .from("suppliers")
         .update({ status })
         .eq("id", id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // If approving (Active), create/update service_option
+      if (status === "Active") {
+        // Check if service option already exists for this supplier
+        const { data: existingOption } = await supabase
+          .from("service_options")
+          .select("id")
+          .eq("supplier_id", supplier.id)
+          .maybeSingle();
+
+        if (existingOption) {
+          // Update existing service option
+          const { error: serviceError } = await supabase
+            .from("service_options")
+            .update({
+              category: supplier.category,
+              title: supplier.title,
+              description: supplier.description,
+              price_min: supplier.min_price,
+              price_max: supplier.max_price,
+              location_area: supplier.location,
+              images: supplier.images,
+              is_active: true,
+            })
+            .eq("id", existingOption.id);
+
+          if (serviceError) throw serviceError;
+        } else {
+          // Create new service option
+          const { error: serviceError } = await supabase
+            .from("service_options")
+            .insert({
+              supplier_id: supplier.id,
+              category: supplier.category,
+              title: supplier.title,
+              description: supplier.description,
+              price_min: supplier.min_price,
+              price_max: supplier.max_price,
+              location_area: supplier.location,
+              images: supplier.images,
+              is_active: true,
+            });
+
+          if (serviceError) throw serviceError;
+        }
+      }
+
+      // If deactivating, deactivate the service_option
+      if (status === "Inactive") {
+        await supabase
+          .from("service_options")
+          .update({ is_active: false })
+          .eq("supplier_id", supplier.id);
+      }
 
       toast({
         title: "Success",

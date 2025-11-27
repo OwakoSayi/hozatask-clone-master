@@ -16,6 +16,7 @@ interface ServiceOption {
   price_min: number;
   price_max: number;
   location_area: string;
+  is_active: boolean;
 }
 
 const CategoryListings = () => {
@@ -28,6 +29,40 @@ const CategoryListings = () => {
 
   useEffect(() => {
     loadServiceOptions();
+
+    // Subscribe to realtime updates for service_options
+    const channel = supabase
+      .channel('service-options-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'service_options',
+          filter: `category=eq.${category}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            const newOption = payload.new as ServiceOption;
+            if (newOption.is_active) {
+              setOptions((prev) => {
+                const exists = prev.find(opt => opt.id === newOption.id);
+                if (exists) {
+                  return prev.map(opt => opt.id === newOption.id ? newOption : opt);
+                }
+                return [...prev, newOption];
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setOptions((prev) => prev.filter(opt => opt.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [category]);
 
   const loadServiceOptions = async () => {
