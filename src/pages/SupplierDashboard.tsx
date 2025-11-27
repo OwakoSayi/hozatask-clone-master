@@ -514,8 +514,8 @@ const SupplierDashboard = () => {
               </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{supplier?.business_name}</h1>
-              <p className="text-muted-foreground">{supplier?.title}</p>
+              <h1 className="text-3xl font-bold text-foreground">{supplier?.contact_name}</h1>
+              <p className="text-muted-foreground">{supplier?.business_name}</p>
             </div>
           </div>
           <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
