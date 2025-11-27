@@ -36,9 +36,22 @@ export const Header = () => {
       .select("status")
       .eq("user_id", userId)
       .eq("status", "Active")
-      .single();
+      .maybeSingle();
     
     setIsSupplier(!!data);
+
+    // If user is logged in but not a supplier, check if they have an unlinkable supplier account
+    if (!data) {
+      const { data: unlinkableSupplier } = await supabase
+        .from("suppliers")
+        .select("id")
+        .is("user_id", null)
+        .eq("status", "Active")
+        .limit(1)
+        .maybeSingle();
+      
+      // Don't auto-navigate, just let them access the link page if needed
+    }
   };
 
   const handleLogout = async () => {
@@ -77,9 +90,14 @@ export const Header = () => {
             </Button>
           )}
           {user && !isSupplier && (
-            <Button variant="ghost" onClick={() => navigate("/my-account")}>
-              My Account
-            </Button>
+            <>
+              <Button variant="ghost" onClick={() => navigate("/my-account")}>
+                My Account
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => navigate("/link-supplier-account")}>
+                Link Supplier Account
+              </Button>
+            </>
           )}
           {user ? (
             <Button onClick={handleLogout}>
