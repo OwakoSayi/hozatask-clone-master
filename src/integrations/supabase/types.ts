@@ -54,6 +54,7 @@ export type Database = {
           phone: string
           selected_option_ids: string[] | null
           status: Database["public"]["Enums"]["booking_status"] | null
+          user_id: string | null
         }
         Insert: {
           address: string
@@ -73,6 +74,7 @@ export type Database = {
           phone: string
           selected_option_ids?: string[] | null
           status?: Database["public"]["Enums"]["booking_status"] | null
+          user_id?: string | null
         }
         Update: {
           address?: string
@@ -92,6 +94,7 @@ export type Database = {
           phone?: string
           selected_option_ids?: string[] | null
           status?: Database["public"]["Enums"]["booking_status"] | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -108,6 +111,7 @@ export type Database = {
           booking_id: string | null
           comment: string | null
           created_at: string
+          customer_id: string | null
           customer_name: string
           id: string
           rating: number
@@ -117,6 +121,7 @@ export type Database = {
           booking_id?: string | null
           comment?: string | null
           created_at?: string
+          customer_id?: string | null
           customer_name: string
           id?: string
           rating: number
@@ -126,6 +131,7 @@ export type Database = {
           booking_id?: string | null
           comment?: string | null
           created_at?: string
+          customer_id?: string | null
           customer_name?: string
           id?: string
           rating?: number

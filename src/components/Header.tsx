@@ -71,9 +71,14 @@ export const Header = () => {
               List Service
             </Button>
           )}
-          {isSupplier && (
+          {user && isSupplier && (
             <Button variant="ghost" onClick={() => navigate("/supplier-dashboard")}>
               My Dashboard
+            </Button>
+          )}
+          {user && !isSupplier && (
+            <Button variant="ghost" onClick={() => navigate("/my-account")}>
+              My Account
             </Button>
           )}
           {user ? (
