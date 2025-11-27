@@ -23,6 +23,7 @@ interface SupplierProfile {
   whatsapp: string;
   images: string[];
   price: number;
+  time_frame: string;
 }
 
 interface ServiceOption {
@@ -31,6 +32,7 @@ interface ServiceOption {
   description: string;
   images: string[];
   price: number;
+  time_frame: string;
   location_area: string;
 }
 
@@ -259,7 +261,7 @@ const SupplierProfile = () => {
                   <div className="bg-muted/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Typical pricing</p>
                     <p className="text-2xl font-bold text-foreground">
-                      R{supplier.price}
+                      R{supplier.price} {supplier.time_frame && `/ ${supplier.time_frame.replace('per ', '')}`}
                     </p>
                   </div>
                 </div>
@@ -311,7 +313,7 @@ const SupplierProfile = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-lg text-foreground">
-                          R{option.price}
+                          R{option.price} {option.time_frame && `/ ${option.time_frame.replace('per ', '')}`}
                         </span>
                         <Button size="sm" variant="default">
                           Book
