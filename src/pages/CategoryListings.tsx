@@ -7,7 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-import { ExternalLink } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 interface ServiceOption {
   id: string;
@@ -19,7 +21,21 @@ interface ServiceOption {
   location_area: string;
   is_active: boolean;
   supplier_id: string;
+  category: string;
+  supplier?: {
+    business_name: string;
+    contact_name: string;
+    images: string[];
+  };
 }
+
+const getPricingTier = (price: number) => {
+  if (price < 500) return { fee: 30, range: "R0-R499" };
+  if (price < 1500) return { fee: 50, range: "R500-R1,499" };
+  if (price < 4000) return { fee: 80, range: "R1,500-R3,999" };
+  if (price < 8000) return { fee: 120, range: "R4,000-R7,999" };
+  return { fee: 200, range: "R8,000+" };
+};
 
 const CategoryListings = () => {
   const { category } = useParams();
@@ -28,6 +44,7 @@ const CategoryListings = () => {
   const [options, setOptions] = useState<ServiceOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
 
   useEffect(() => {
     loadServiceOptions();
@@ -71,7 +88,10 @@ const CategoryListings = () => {
     try {
       const { data, error } = await supabase
         .from("service_options")
-        .select("*")
+        .select(`
+          *,
+          supplier:suppliers(business_name, contact_name, images)
+        `)
         .eq("category", category)
         .eq("is_active", true);
 
@@ -89,7 +109,12 @@ const CategoryListings = () => {
     }
   };
 
-  const toggleSelection = (id: string) => {
+  const toggleSelection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const option = options.find(opt => opt.id === id);
+    if (!option) return;
+
     if (selectedIds.includes(id)) {
       setSelectedIds(selectedIds.filter((sid) => sid !== id));
     } else {
@@ -100,6 +125,25 @@ const CategoryListings = () => {
         });
         return;
       }
+
+      // Check pricing range compatibility
+      if (selectedIds.length > 0) {
+        const firstSelected = options.find(opt => opt.id === selectedIds[0]);
+        if (firstSelected) {
+          const firstTier = getPricingTier(firstSelected.price);
+          const currentTier = getPricingTier(option.price);
+          
+          if (firstTier.fee !== currentTier.fee) {
+            toast({
+              title: "Pricing Range Mismatch",
+              description: `All selected services must be in the same pricing range. First selection is ${firstTier.range} (R${firstTier.fee} booking fee).`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+      }
+
       setSelectedIds([...selectedIds, id]);
     }
   };
@@ -150,57 +194,60 @@ const CategoryListings = () => {
         ) : (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {options.map((option) => (
-                <Card
-                  key={option.id}
-                  className={`cursor-pointer transition-all ${
-                    selectedIds.includes(option.id)
-                      ? "ring-2 ring-primary"
-                      : "hover:shadow-lg"
-                  }`}
-                  onClick={() => toggleSelection(option.id)}
-                >
-                  {option.images && option.images.length > 0 && (
-                    <img
-                      src={option.images[0]}
-                      alt={option.title}
-                      className="w-full h-48 object-cover rounded-t-lg"
-                    />
-                  )}
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <CardTitle className="text-xl mb-1">{option.title}</CardTitle>
-                        <Button
-                          variant="link"
-                          size="sm"
-                          className="p-0 h-auto text-xs"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/supplier/${option.supplier_id}`);
-                          }}
-                        >
-                          <ExternalLink className="h-3 w-3 mr-1" />
-                          View Supplier
-                        </Button>
+              {options.map((option) => {
+                const tier = getPricingTier(option.price);
+                return (
+                  <Card
+                    key={option.id}
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                      selectedIds.includes(option.id)
+                        ? "ring-2 ring-primary"
+                        : ""
+                    }`}
+                    onClick={() => setSelectedService(option)}
+                  >
+                    {option.images && option.images.length > 0 && (
+                      <div className="relative">
+                        <img
+                          src={option.images[0]}
+                          alt={option.title}
+                          className="w-full h-48 object-cover rounded-t-lg"
+                        />
+                        {selectedIds.includes(option.id) && (
+                          <Badge className="absolute top-2 right-2 bg-primary">
+                            Option {selectedIds.indexOf(option.id) + 1}
+                          </Badge>
+                        )}
                       </div>
-                      <Checkbox
-                        checked={selectedIds.includes(option.id)}
-                        onCheckedChange={() => toggleSelection(option.id)}
-                      />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground mb-4">{option.description}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-foreground">
-                        R{option.price} {option.time_frame && `/ ${option.time_frame.replace('per ', '')}`}
-                      </span>
-                      <span className="text-sm text-muted-foreground">{option.location_area}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    )}
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg mb-2">{option.title}</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={option.supplier?.images?.[0]} />
+                          <AvatarFallback>{option.supplier?.business_name?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{option.supplier?.business_name}</p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{option.description}</p>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-lg">
+                          R{option.price}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{option.time_frame}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs text-muted-foreground">
+                        <span>{option.location_area}</span>
+                        <span>Booking fee: R{tier.fee}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             <div className="sticky bottom-0 bg-background border-t border-border py-4">
@@ -222,6 +269,95 @@ const CategoryListings = () => {
       </div>
 
       <Footer />
+
+      <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedService && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl">{selectedService.title}</DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {selectedService.images && selectedService.images.length > 0 && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {selectedService.images.map((img, idx) => (
+                      <img
+                        key={idx}
+                        src={img}
+                        alt={`${selectedService.title} ${idx + 1}`}
+                        className="w-full h-64 object-cover rounded-lg"
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={selectedService.supplier?.images?.[0]} />
+                    <AvatarFallback>{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{selectedService.supplier?.business_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedService.supplier?.contact_name}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Description</h3>
+                  <p className="text-muted-foreground">{selectedService.description}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-1">Price</h3>
+                    <p className="text-2xl font-bold">R{selectedService.price}</p>
+                    <p className="text-sm text-muted-foreground">{selectedService.time_frame}</p>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Booking Fee</h3>
+                    <p className="text-2xl font-bold">R{getPricingTier(selectedService.price).fee}</p>
+                    <p className="text-sm text-muted-foreground">{getPricingTier(selectedService.price).range}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-1">Location</h3>
+                  <p className="text-muted-foreground">{selectedService.location_area}</p>
+                </div>
+
+                <div className="flex gap-2">
+                  {selectedIds.includes(selectedService.id) ? (
+                    <Button 
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={(e) => toggleSelection(selectedService.id, e)}
+                    >
+                      Remove from Selection
+                    </Button>
+                  ) : (
+                    <>
+                      <Button 
+                        className="flex-1"
+                        onClick={(e) => toggleSelection(selectedService.id, e)}
+                        disabled={selectedIds.length >= 3}
+                      >
+                        Add as Option {selectedIds.length + 1}
+                      </Button>
+                    </>
+                  )}
+                  <Button 
+                    variant="secondary"
+                    onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}
+                  >
+                    View Supplier Profile
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
