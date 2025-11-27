@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 
 interface Supplier {
   id: string;
@@ -59,6 +60,8 @@ const SupplierDashboard = () => {
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceOption | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -175,7 +178,7 @@ const SupplierDashboard = () => {
     }
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -199,19 +202,34 @@ const SupplierDashboard = () => {
       return;
     }
 
+    // Create preview URL and open crop dialog
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImageToCrop(reader.result as string);
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset the input so the same file can be selected again
+    event.target.value = '';
+  };
+
+  const handleCropComplete = async (croppedImage: Blob) => {
     setUploadingImage(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not authenticated");
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${session.user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${session.user.id}-${Date.now()}.jpg`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedImage, { 
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -219,14 +237,14 @@ const SupplierDashboard = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Add to existing images
+      // Add to existing images (prepend so it's first)
       const currentImages = profileData.images ? profileData.images.split(',').map(s => s.trim()).filter(Boolean) : [];
       currentImages.unshift(publicUrl);
       setProfileData({ ...profileData, images: currentImages.join(', ') });
 
       toast({
         title: "Success",
-        description: "Image uploaded successfully",
+        description: "Profile photo updated successfully",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -469,7 +487,7 @@ const SupplierDashboard = () => {
                       id="profile-image"
                       type="file"
                       accept="image/*"
-                      onChange={handleImageUpload}
+                      onChange={handleImageSelect}
                       disabled={uploadingImage}
                       className="hidden"
                     />
@@ -882,6 +900,20 @@ const SupplierDashboard = () => {
       </div>
 
       <Footer />
+
+      {/* Image Crop Dialog */}
+      {imageToCrop && (
+        <ImageCropDialog
+          image={imageToCrop}
+          open={cropDialogOpen}
+          onClose={() => {
+            setCropDialogOpen(false);
+            setImageToCrop(null);
+          }}
+          onCropComplete={handleCropComplete}
+          aspectRatio={1}
+        />
+      )}
     </div>
   );
 };
