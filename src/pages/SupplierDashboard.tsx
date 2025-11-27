@@ -17,6 +17,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { CardDescription } from "@/components/ui/card";
 
 interface Supplier {
   id: string;
@@ -46,6 +49,7 @@ const SupplierDashboard = () => {
   const { toast } = useToast();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profileDialogOpen, setProfileDialogOpen] = useState(false);
@@ -130,6 +134,16 @@ const SupplierDashboard = () => {
 
       if (optionsError) throw optionsError;
       setServiceOptions(optionsData || []);
+
+      // Load bookings for this supplier
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("matched_supplier_id", supplierData.id)
+        .order("created_at", { ascending: false });
+
+      if (bookingsError) throw bookingsError;
+      setBookings(bookingsData || []);
     } catch (error) {
       console.error("Error loading supplier data:", error);
       toast({
@@ -530,6 +544,57 @@ const SupplierDashboard = () => {
           </div>
         </div>
 
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="services">My Services</TabsTrigger>
+            <TabsTrigger value="bookings">Bookings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="profile" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Business Profile</CardTitle>
+                <CardDescription>Your supplier profile information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-1">Business Name</h3>
+                  <p className="text-muted-foreground">{supplier?.business_name}</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-1">Contact Name</h3>
+                  <p className="text-muted-foreground">{supplier?.contact_name}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-1">Phone</h3>
+                    <p className="text-muted-foreground">{supplier?.phone}</p>
+                  </div>
+                  {supplier?.whatsapp && (
+                    <div>
+                      <h3 className="font-semibold mb-1">WhatsApp</h3>
+                      <p className="text-muted-foreground">{supplier.whatsapp}</p>
+                    </div>
+                  )}
+                </div>
+                {supplier?.description && (
+                  <div>
+                    <h3 className="font-semibold mb-1">About</h3>
+                    <p className="text-muted-foreground">{supplier.description}</p>
+                  </div>
+                )}
+                {supplier?.location && (
+                  <div>
+                    <h3 className="font-semibold mb-1">Location</h3>
+                    <p className="text-muted-foreground">{supplier.location}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="services" className="mt-6">
         {serviceOptions.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
@@ -600,6 +665,56 @@ const SupplierDashboard = () => {
             ))}
           </div>
         )}
+          </TabsContent>
+
+          <TabsContent value="bookings" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Received Bookings</CardTitle>
+                <CardDescription>Manage bookings from customers</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {bookings.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No bookings yet
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {bookings.map((booking) => (
+                      <Card key={booking.id}>
+                        <CardContent className="pt-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h3 className="font-semibold">{booking.customer_name}</h3>
+                              <p className="text-sm text-muted-foreground">{booking.email}</p>
+                              <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                            </div>
+                            <Badge className={
+                              booking.status === "Completed" ? "bg-green-500" :
+                              booking.status === "Confirmed" ? "bg-blue-500" :
+                              "bg-yellow-500"
+                            }>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-2 text-sm">
+                            <p><strong>Event Date:</strong> {new Date(booking.event_date).toLocaleDateString()}</p>
+                            <p><strong>Event Time:</strong> {booking.event_time}</p>
+                            <p><strong>Location:</strong> {booking.address}</p>
+                            {booking.notes && <p><strong>Notes:</strong> {booking.notes}</p>}
+                            <p className="text-xs text-muted-foreground">
+                              Booked on {new Date(booking.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Footer />

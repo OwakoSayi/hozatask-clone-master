@@ -73,6 +73,9 @@ const BookingForm = () => {
     setSubmitting(true);
 
     try {
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      
       // In a real app, integrate payment here first
       // For MVP, we'll just create the booking
       const { data, error } = await supabase
@@ -89,6 +92,7 @@ const BookingForm = () => {
           selected_option_ids: selectedIds,
           booking_fee_paid: true, // Set to true after payment
           status: "New",
+          user_id: session?.user?.id || null,
         })
         .select()
         .single();
