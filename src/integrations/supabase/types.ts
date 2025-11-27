@@ -165,6 +165,7 @@ export type Database = {
           location_area: string | null
           price: number
           supplier_id: string | null
+          time_frame: string | null
           title: string
         }
         Insert: {
@@ -177,6 +178,7 @@ export type Database = {
           location_area?: string | null
           price: number
           supplier_id?: string | null
+          time_frame?: string | null
           title: string
         }
         Update: {
@@ -189,6 +191,7 @@ export type Database = {
           location_area?: string | null
           price?: number
           supplier_id?: string | null
+          time_frame?: string | null
           title?: string
         }
         Relationships: [
@@ -214,6 +217,7 @@ export type Database = {
           phone: string
           price: number | null
           status: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame: string | null
           title: string
           user_id: string | null
           whatsapp: string | null
@@ -230,6 +234,7 @@ export type Database = {
           phone: string
           price?: number | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame?: string | null
           title: string
           user_id?: string | null
           whatsapp?: string | null
@@ -246,6 +251,7 @@ export type Database = {
           phone?: string
           price?: number | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame?: string | null
           title?: string
           user_id?: string | null
           whatsapp?: string | null

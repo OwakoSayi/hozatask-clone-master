@@ -18,6 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
@@ -41,6 +48,7 @@ interface ServiceOption {
   title: string;
   description: string;
   price: number;
+  time_frame: string;
   location_area: string;
   images: string[];
   is_active: boolean;
@@ -67,6 +75,7 @@ const SupplierDashboard = () => {
     title: "",
     description: "",
     price: "",
+    time_frame: "per hour",
     location_area: "",
     images: [] as string[],
   });
@@ -319,6 +328,7 @@ const SupplierDashboard = () => {
         title: formData.title,
         description: formData.description,
         price: parseFloat(formData.price),
+        time_frame: formData.time_frame,
         location_area: formData.location_area,
         images: formData.images,
         is_active: true,
@@ -356,6 +366,7 @@ const SupplierDashboard = () => {
         title: "",
         description: "",
         price: "",
+        time_frame: "per hour",
         location_area: "",
         images: [],
       });
@@ -376,6 +387,7 @@ const SupplierDashboard = () => {
       title: service.title,
       description: service.description || "",
       price: service.price.toString(),
+      time_frame: service.time_frame || "per hour",
       location_area: service.location_area || "",
       images: service.images || [],
     });
@@ -699,6 +711,7 @@ const SupplierDashboard = () => {
                           title: "",
                           description: "",
                           price: "",
+                          time_frame: "per hour",
                           location_area: "",
                           images: [],
                         });
@@ -743,6 +756,25 @@ const SupplierDashboard = () => {
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             required
                           />
+                        </div>
+                        <div>
+                          <Label htmlFor="time_frame">Time Frame</Label>
+                          <Select 
+                            value={formData.time_frame} 
+                            onValueChange={(value) => setFormData({ ...formData, time_frame: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select time frame" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="per hour">Per Hour</SelectItem>
+                              <SelectItem value="per day">Per Day</SelectItem>
+                              <SelectItem value="per week">Per Week</SelectItem>
+                              <SelectItem value="per month">Per Month</SelectItem>
+                              <SelectItem value="per service">Per Service</SelectItem>
+                              <SelectItem value="per project">Per Project</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div>
                           <Label htmlFor="location_area">Service Area</Label>
@@ -841,7 +873,9 @@ const SupplierDashboard = () => {
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
-                              <p className="font-semibold text-foreground">R{service.price}</p>
+                              <p className="font-semibold text-foreground">
+                                R{service.price} {service.time_frame && `/ ${service.time_frame.replace('per ', '')}`}
+                              </p>
                             </div>
                             <div className="flex gap-2">
                               <Button

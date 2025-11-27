@@ -23,6 +23,7 @@ interface ServiceOption {
   description: string;
   images: string[];
   price: number;
+  time_frame: string;
   location_area: string;
   category: string;
   is_active: boolean;
@@ -290,7 +291,7 @@ const BrowseServices = () => {
                     </p>
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-foreground">
-                        R{option.price}
+                        R{option.price} {option.time_frame && `/ ${option.time_frame.replace('per ', '')}`}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {option.location_area}
