@@ -12,7 +12,7 @@ import BookingConfirmation from "./pages/BookingConfirmation";
 import SupplierSubmission from "./pages/SupplierSubmission";
 import SupplierProfile from "./pages/SupplierProfile";
 import SupplierDashboard from "./pages/SupplierDashboard";
-import SupplierDirectory from "./pages/SupplierDirectory";
+
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSetup from "./pages/AdminSetup";
@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/supplier-submission" element={<SupplierSubmission />} />
           <Route path="/supplier/:id" element={<SupplierProfile />} />
           <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
-          <Route path="/suppliers" element={<SupplierDirectory />} />
+          
           <Route path="/admin/setup" element={<AdminSetup />} />
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
