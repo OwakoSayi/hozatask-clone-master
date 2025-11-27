@@ -14,8 +14,7 @@ interface ServiceOption {
   title: string;
   description: string;
   images: string[];
-  price_min: number;
-  price_max: number;
+  price: number;
   location_area: string;
   is_active: boolean;
   supplier_id: string;
@@ -194,7 +193,7 @@ const CategoryListings = () => {
                     <p className="text-muted-foreground mb-4">{option.description}</p>
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-foreground">
-                        R{option.price_min} - R{option.price_max}
+                        R{option.price}
                       </span>
                       <span className="text-sm text-muted-foreground">{option.location_area}</span>
                     </div>

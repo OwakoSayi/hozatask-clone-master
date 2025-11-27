@@ -31,8 +31,7 @@ interface Supplier {
   category: string;
   title: string;
   status: string;
-  min_price: number;
-  max_price: number;
+  price: number;
   images: string[];
 }
 
@@ -169,8 +168,7 @@ const AdminDashboard = () => {
               category: supplier.category,
               title: supplier.title,
               description: supplier.description,
-              price_min: supplier.min_price,
-              price_max: supplier.max_price,
+              price: supplier.price,
               location_area: supplier.location,
               images: supplier.images,
               is_active: true,
@@ -187,8 +185,7 @@ const AdminDashboard = () => {
               category: supplier.category,
               title: supplier.title,
               description: supplier.description,
-              price_min: supplier.min_price,
-              price_max: supplier.max_price,
+              price: supplier.price,
               location_area: supplier.location,
               images: supplier.images,
               is_active: true,
@@ -395,7 +392,7 @@ const AdminDashboard = () => {
                       <span className="text-muted-foreground">Phone:</span> {supplier.phone}
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Price Range:</span> R{supplier.min_price} - R{supplier.max_price}
+                      <span className="text-muted-foreground">Price:</span> R{supplier.price}
                     </div>
                   </div>
 

@@ -23,8 +23,7 @@ interface Supplier {
   category: string;
   location: string;
   images: string[];
-  min_price: number;
-  max_price: number;
+  price: number;
 }
 
 interface SupplierWithRating extends Supplier {
@@ -208,7 +207,7 @@ const SupplierDirectory = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-semibold">
-                        R{supplier.min_price} - R{supplier.max_price}
+                        R{supplier.price}
                       </span>
                       {supplier.reviewCount > 0 && (
                         <span className="text-xs text-muted-foreground">

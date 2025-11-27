@@ -31,8 +31,7 @@ const SupplierSubmission = () => {
     location: "",
     category: "",
     title: "",
-    min_price: "",
-    max_price: "",
+    price: "",
     description: "",
   });
 
@@ -118,7 +117,7 @@ const SupplierSubmission = () => {
       case 2:
         return formData.category && formData.title && formData.location;
       case 3:
-        return formData.min_price && formData.max_price;
+        return formData.price;
       case 4:
         return formData.description;
       default:
@@ -139,8 +138,7 @@ const SupplierSubmission = () => {
         location: formData.location,
         category: formData.category,
         title: formData.title,
-        min_price: parseFloat(formData.min_price),
-        max_price: parseFloat(formData.max_price),
+        price: parseFloat(formData.price),
         description: formData.description,
         images: images.length > 0 ? images : null,
         status: "Pending",
@@ -282,31 +280,18 @@ const SupplierSubmission = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Pricing</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="min_price">Minimum Price (R) *</Label>
-                <Input
-                  id="min_price"
-                  type="number"
-                  required
-                  value={formData.min_price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, min_price: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="max_price">Maximum Price (R) *</Label>
-                <Input
-                  id="max_price"
-                  type="number"
-                  required
-                  value={formData.max_price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, max_price: e.target.value })
-                  }
-                />
-              </div>
+            <div>
+              <Label htmlFor="price">Your Price (R) *</Label>
+              <Input
+                id="price"
+                type="number"
+                required
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
+                placeholder="e.g., 500"
+              />
             </div>
           </div>
         );

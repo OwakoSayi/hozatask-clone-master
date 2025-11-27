@@ -22,8 +22,7 @@ interface SupplierProfile {
   phone: string;
   whatsapp: string;
   images: string[];
-  min_price: number;
-  max_price: number;
+  price: number;
 }
 
 interface ServiceOption {
@@ -31,8 +30,7 @@ interface ServiceOption {
   title: string;
   description: string;
   images: string[];
-  price_min: number;
-  price_max: number;
+  price: number;
   location_area: string;
 }
 
@@ -261,7 +259,7 @@ const SupplierProfile = () => {
                   <div className="bg-muted/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Typical pricing</p>
                     <p className="text-2xl font-bold text-foreground">
-                      R{supplier.min_price} - R{supplier.max_price}
+                      R{supplier.price}
                     </p>
                   </div>
                 </div>
@@ -313,7 +311,7 @@ const SupplierProfile = () => {
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-lg text-foreground">
-                          R{option.price_min} - R{option.price_max}
+                          R{option.price}
                         </span>
                         <Button size="sm" variant="default">
                           Book

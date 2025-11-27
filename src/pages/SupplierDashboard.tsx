@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Upload, Star, TrendingUp, DollarSign, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Star, TrendingUp, DollarSign, CheckCircle, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,8 +40,7 @@ interface ServiceOption {
   id: string;
   title: string;
   description: string;
-  price_min: number;
-  price_max: number;
+  price: number;
   location_area: string;
   images: string[];
   is_active: boolean;
@@ -62,14 +61,14 @@ const SupplierDashboard = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropTarget, setCropTarget] = useState<'profile' | 'service'>('profile');
   
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    price_min: "",
-    price_max: "",
+    price: "",
     location_area: "",
-    images: "",
+    images: [] as string[],
   });
 
   const [profileData, setProfileData] = useState({
@@ -158,7 +157,6 @@ const SupplierDashboard = () => {
       if (reviewsError) throw reviewsError;
       setReviews(reviewsData || []);
 
-      // Calculate stats
       const completed = bookingsData?.filter(b => b.status === "Completed").length || 0;
       const pending = bookingsData?.filter(b => b.status === "New" || b.status === "InProgress").length || 0;
       const avgRating = reviewsData && reviewsData.length > 0
@@ -178,11 +176,10 @@ const SupplierDashboard = () => {
     }
   };
 
-  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>, target: 'profile' | 'service') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Invalid File",
@@ -192,7 +189,6 @@ const SupplierDashboard = () => {
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File Too Large",
@@ -202,15 +198,14 @@ const SupplierDashboard = () => {
       return;
     }
 
-    // Create preview URL and open crop dialog
     const reader = new FileReader();
     reader.onload = () => {
       setImageToCrop(reader.result as string);
+      setCropTarget(target);
       setCropDialogOpen(true);
     };
     reader.readAsDataURL(file);
     
-    // Reset the input so the same file can be selected again
     event.target.value = '';
   };
 
@@ -237,14 +232,17 @@ const SupplierDashboard = () => {
         .from('avatars')
         .getPublicUrl(filePath);
 
-      // Add to existing images (prepend so it's first)
-      const currentImages = profileData.images ? profileData.images.split(',').map(s => s.trim()).filter(Boolean) : [];
-      currentImages.unshift(publicUrl);
-      setProfileData({ ...profileData, images: currentImages.join(', ') });
+      if (cropTarget === 'profile') {
+        const currentImages = profileData.images ? profileData.images.split(',').map(s => s.trim()).filter(Boolean) : [];
+        currentImages.unshift(publicUrl);
+        setProfileData({ ...profileData, images: currentImages.join(', ') });
+      } else {
+        setFormData({ ...formData, images: [...formData.images, publicUrl] });
+      }
 
       toast({
         title: "Success",
-        description: "Profile photo updated successfully",
+        description: "Image uploaded successfully",
       });
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -258,24 +256,25 @@ const SupplierDashboard = () => {
     }
   };
 
+  const handleRemoveServiceImage = (index: number) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!supplier) return;
 
     try {
-      const imagesArray = formData.images
-        ? formData.images.split(",").map((url) => url.trim())
-        : [];
-
       const serviceData = {
         supplier_id: supplier.id,
         title: formData.title,
         description: formData.description,
-        price_min: parseFloat(formData.price_min),
-        price_max: parseFloat(formData.price_max),
+        price: parseFloat(formData.price),
         location_area: formData.location_area,
-        images: imagesArray,
+        images: formData.images,
         is_active: true,
         category: supplier.category,
       };
@@ -310,10 +309,9 @@ const SupplierDashboard = () => {
       setFormData({
         title: "",
         description: "",
-        price_min: "",
-        price_max: "",
+        price: "",
         location_area: "",
-        images: "",
+        images: [],
       });
       loadSupplierData();
     } catch (error) {
@@ -331,10 +329,9 @@ const SupplierDashboard = () => {
     setFormData({
       title: service.title,
       description: service.description || "",
-      price_min: service.price_min.toString(),
-      price_max: service.price_max.toString(),
+      price: service.price.toString(),
       location_area: service.location_area || "",
-      images: service.images ? service.images.join(", ") : "",
+      images: service.images || [],
     });
     setDialogOpen(true);
   };
@@ -487,7 +484,7 @@ const SupplierDashboard = () => {
                       id="profile-image"
                       type="file"
                       accept="image/*"
-                      onChange={handleImageSelect}
+                      onChange={(e) => handleImageSelect(e, 'profile')}
                       disabled={uploadingImage}
                       className="hidden"
                     />
@@ -655,10 +652,9 @@ const SupplierDashboard = () => {
                         setFormData({
                           title: "",
                           description: "",
-                          price_min: "",
-                          price_max: "",
+                          price: "",
                           location_area: "",
-                          images: "",
+                          images: [],
                         });
                       }}>
                         <Plus className="mr-2 h-4 w-4" />
@@ -692,27 +688,15 @@ const SupplierDashboard = () => {
                             placeholder="Describe what this service includes..."
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <Label htmlFor="price_min">Starting Price (R)</Label>
-                            <Input
-                              id="price_min"
-                              type="number"
-                              value={formData.price_min}
-                              onChange={(e) => setFormData({ ...formData, price_min: e.target.value })}
-                              required
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor="price_max">Max Price (R)</Label>
-                            <Input
-                              id="price_max"
-                              type="number"
-                              value={formData.price_max}
-                              onChange={(e) => setFormData({ ...formData, price_max: e.target.value })}
-                              required
-                            />
-                          </div>
+                        <div>
+                          <Label htmlFor="price">Price (R)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            required
+                          />
                         </div>
                         <div>
                           <Label htmlFor="location_area">Service Area</Label>
@@ -723,6 +707,50 @@ const SupplierDashboard = () => {
                             placeholder="e.g., Sandton, Johannesburg"
                           />
                         </div>
+                        
+                        {/* Image Management */}
+                        <div>
+                          <Label>Service Photos</Label>
+                          <div className="grid grid-cols-3 gap-3 mt-2 mb-3">
+                            {formData.images.map((imageUrl, index) => (
+                              <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                                <img 
+                                  src={imageUrl} 
+                                  alt={`Service ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-1 right-1 h-6 w-6"
+                                  onClick={() => handleRemoveServiceImage(index)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                          <Input
+                            id="service-image"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageSelect(e, 'service')}
+                            disabled={uploadingImage}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={uploadingImage}
+                            onClick={() => document.getElementById('service-image')?.click()}
+                          >
+                            <Upload className="mr-2 h-4 w-4" />
+                            {uploadingImage ? "Uploading..." : "Add Photo"}
+                          </Button>
+                        </div>
+
                         <div className="flex justify-end gap-2">
                           <Button
                             type="button"
@@ -751,7 +779,14 @@ const SupplierDashboard = () => {
                     {serviceOptions.map((service) => (
                       <Card key={service.id} className="border-border">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
+                          <div className="flex justify-between items-start gap-4">
+                            {service.images && service.images.length > 0 && (
+                              <img
+                                src={service.images[0]}
+                                alt={service.title}
+                                className="w-20 h-20 object-cover rounded-lg"
+                              />
+                            )}
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
                                 <h3 className="font-semibold text-lg text-foreground">{service.title}</h3>
@@ -760,9 +795,7 @@ const SupplierDashboard = () => {
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
-                              <p className="font-semibold text-foreground">
-                                R{service.price_min} - R{service.price_max}
-                              </p>
+                              <p className="font-semibold text-foreground">R{service.price}</p>
                             </div>
                             <div className="flex gap-2">
                               <Button

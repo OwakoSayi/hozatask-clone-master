@@ -22,8 +22,7 @@ interface ServiceOption {
   title: string;
   description: string;
   images: string[];
-  price_min: number;
-  price_max: number;
+  price: number;
   location_area: string;
   category: string;
   is_active: boolean;
@@ -291,7 +290,7 @@ const BrowseServices = () => {
                     </p>
                     <div className="flex justify-between items-center">
                       <span className="font-semibold text-foreground">
-                        R{option.price_min} - R{option.price_max}
+                        R{option.price}
                       </span>
                       <span className="text-xs text-muted-foreground">
                         {option.location_area}

@@ -163,8 +163,7 @@ export type Database = {
           images: string[] | null
           is_active: boolean | null
           location_area: string | null
-          price_max: number | null
-          price_min: number | null
+          price: number
           supplier_id: string | null
           title: string
         }
@@ -176,8 +175,7 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean | null
           location_area?: string | null
-          price_max?: number | null
-          price_min?: number | null
+          price: number
           supplier_id?: string | null
           title: string
         }
@@ -189,8 +187,7 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean | null
           location_area?: string | null
-          price_max?: number | null
-          price_min?: number | null
+          price?: number
           supplier_id?: string | null
           title?: string
         }
@@ -214,9 +211,8 @@ export type Database = {
           id: string
           images: string[] | null
           location: string | null
-          max_price: number | null
-          min_price: number | null
           phone: string
+          price: number | null
           status: Database["public"]["Enums"]["supplier_status"] | null
           title: string
           user_id: string | null
@@ -231,9 +227,8 @@ export type Database = {
           id?: string
           images?: string[] | null
           location?: string | null
-          max_price?: number | null
-          min_price?: number | null
           phone: string
+          price?: number | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
           title: string
           user_id?: string | null
@@ -248,9 +243,8 @@ export type Database = {
           id?: string
           images?: string[] | null
           location?: string | null
-          max_price?: number | null
-          min_price?: number | null
           phone?: string
+          price?: number | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
           title?: string
           user_id?: string | null
