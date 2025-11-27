@@ -21,6 +21,12 @@ import {
 interface Supplier {
   id: string;
   business_name: string;
+  contact_name: string;
+  phone: string;
+  whatsapp: string | null;
+  description: string | null;
+  images: string[] | null;
+  location: string | null;
   status: string;
 }
 
@@ -42,6 +48,7 @@ const SupplierDashboard = () => {
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceOption | null>(null);
   
   const [formData, setFormData] = useState({
@@ -50,6 +57,16 @@ const SupplierDashboard = () => {
     price_min: "",
     price_max: "",
     location_area: "",
+    images: "",
+  });
+
+  const [profileData, setProfileData] = useState({
+    business_name: "",
+    contact_name: "",
+    phone: "",
+    whatsapp: "",
+    description: "",
+    location: "",
     images: "",
   });
 
@@ -92,6 +109,17 @@ const SupplierDashboard = () => {
       }
 
       setSupplier(supplierData);
+      
+      // Set profile form data
+      setProfileData({
+        business_name: supplierData.business_name || "",
+        contact_name: supplierData.contact_name || "",
+        phone: supplierData.phone || "",
+        whatsapp: supplierData.whatsapp || "",
+        description: supplierData.description || "",
+        location: supplierData.location || "",
+        images: supplierData.images ? supplierData.images.join(", ") : "",
+      });
 
       // Load service options
       const { data: optionsData, error: optionsError } = await supabase
@@ -245,6 +273,47 @@ const SupplierDashboard = () => {
     }
   };
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!supplier) return;
+
+    try {
+      const imagesArray = profileData.images
+        ? profileData.images.split(",").map((url) => url.trim())
+        : [];
+
+      const { error } = await supabase
+        .from("suppliers")
+        .update({
+          business_name: profileData.business_name,
+          contact_name: profileData.contact_name,
+          phone: profileData.phone,
+          whatsapp: profileData.whatsapp || null,
+          description: profileData.description || null,
+          location: profileData.location || null,
+          images: imagesArray.length > 0 ? imagesArray : null,
+        })
+        .eq("id", supplier.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      });
+      setProfileDialogOpen(false);
+      loadSupplierData();
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -265,7 +334,102 @@ const SupplierDashboard = () => {
               {supplier?.business_name}
             </p>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <div className="flex gap-2">
+            <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Profile
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Supplier Profile</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="business_name">Business Name</Label>
+                    <Input
+                      id="business_name"
+                      value={profileData.business_name}
+                      onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_name">Contact Name</Label>
+                    <Input
+                      id="contact_name"
+                      value={profileData.contact_name}
+                      onChange={(e) => setProfileData({ ...profileData, contact_name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        value={profileData.phone}
+                        onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="whatsapp">WhatsApp</Label>
+                      <Input
+                        id="whatsapp"
+                        value={profileData.whatsapp}
+                        onChange={(e) => setProfileData({ ...profileData, whatsapp: e.target.value })}
+                        placeholder="Optional"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="profile_description">About Your Business</Label>
+                    <Textarea
+                      id="profile_description"
+                      value={profileData.description}
+                      onChange={(e) => setProfileData({ ...profileData, description: e.target.value })}
+                      rows={4}
+                      placeholder="Tell clients about your business..."
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={profileData.location}
+                      onChange={(e) => setProfileData({ ...profileData, location: e.target.value })}
+                      placeholder="e.g., Johannesburg, South Africa"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="profile_images">Profile Image URLs (comma separated)</Label>
+                    <Textarea
+                      id="profile_images"
+                      value={profileData.images}
+                      onChange={(e) => setProfileData({ ...profileData, images: e.target.value })}
+                      placeholder="https://example.com/logo.jpg, https://example.com/shop.jpg"
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setProfileDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit">
+                      Update Profile
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setEditingService(null);
@@ -363,6 +527,7 @@ const SupplierDashboard = () => {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {serviceOptions.length === 0 ? (
