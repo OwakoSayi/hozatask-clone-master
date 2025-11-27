@@ -299,7 +299,6 @@ const BrowseServices = () => {
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {filteredOptions.map((option) => {
-                const tier = getPricingTier(option.price);
                 return (
                   <Card
                     key={option.id}
@@ -315,44 +314,24 @@ const BrowseServices = () => {
                         <img
                           src={option.images[0]}
                           alt={option.title}
-                          className="w-full h-48 object-cover rounded-t-lg"
+                          className="w-full h-64 object-cover rounded-t-lg"
                         />
                         {selectedIds.includes(option.id) && (
                           <Badge className="absolute top-2 right-2 bg-primary">
                             Option {selectedIds.indexOf(option.id) + 1}
                           </Badge>
                         )}
-                      </div>
-                    )}
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="secondary" className="text-xs capitalize">
+                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs capitalize">
                           {option.category}
                         </Badge>
                       </div>
-                      <CardTitle className="text-lg mb-2">{option.title}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={option.supplier?.images?.[0]} />
-                          <AvatarFallback>{option.supplier?.business_name?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{option.supplier?.business_name}</p>
-                        </div>
+                    )}
+                    <CardContent className="pt-4">
+                      <div className="font-bold text-xl mb-2">
+                        R{option.price}
                       </div>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{option.description}</p>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-bold text-lg">
-                          R{option.price}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{option.time_frame}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-muted-foreground">
-                        <span>{option.location_area}</span>
-                        <span>Booking fee: R{tier.fee}</span>
-                      </div>
+                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{option.title}</h3>
+                      <p className="text-sm text-muted-foreground">{option.location_area}</p>
                     </CardContent>
                   </Card>
                 );
