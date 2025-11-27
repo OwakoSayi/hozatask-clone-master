@@ -49,6 +49,7 @@ interface ServiceOption {
   description: string;
   price: number;
   time_frame: string;
+  category: string;
   location_area: string;
   images: string[];
   is_active: boolean;
@@ -76,6 +77,7 @@ const SupplierDashboard = () => {
     description: "",
     price: "",
     time_frame: "per hour",
+    category: "",
     location_area: "",
     images: [] as string[],
   });
@@ -329,10 +331,10 @@ const SupplierDashboard = () => {
         description: formData.description,
         price: parseFloat(formData.price),
         time_frame: formData.time_frame,
+        category: formData.category,
         location_area: formData.location_area,
         images: formData.images,
         is_active: true,
-        category: supplier.category,
       };
 
       if (editingService) {
@@ -367,6 +369,7 @@ const SupplierDashboard = () => {
         description: "",
         price: "",
         time_frame: "per hour",
+        category: "",
         location_area: "",
         images: [],
       });
@@ -388,6 +391,7 @@ const SupplierDashboard = () => {
       description: service.description || "",
       price: service.price.toString(),
       time_frame: service.time_frame || "per hour",
+      category: service.category || "",
       location_area: service.location_area || "",
       images: service.images || [],
     });
@@ -712,6 +716,7 @@ const SupplierDashboard = () => {
                           description: "",
                           price: "",
                           time_frame: "per hour",
+                          category: supplier?.category || "",
                           location_area: "",
                           images: [],
                         });
@@ -773,6 +778,49 @@ const SupplierDashboard = () => {
                               <SelectItem value="per month">Per Month</SelectItem>
                               <SelectItem value="per service">Per Service</SelectItem>
                               <SelectItem value="per project">Per Project</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="category">Service Category</Label>
+                          <Select 
+                            value={formData.category} 
+                            onValueChange={(value) => setFormData({ ...formData, category: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              <SelectItem value="Cleaning">Cleaning</SelectItem>
+                              <SelectItem value="Handyman">Handyman</SelectItem>
+                              <SelectItem value="Plumbing">Plumbing</SelectItem>
+                              <SelectItem value="Electrical">Electrical</SelectItem>
+                              <SelectItem value="Painting">Painting</SelectItem>
+                              <SelectItem value="Gardening & Landscaping">Gardening & Landscaping</SelectItem>
+                              <SelectItem value="Moving & Transportation">Moving & Transportation</SelectItem>
+                              <SelectItem value="Assembly & Installation">Assembly & Installation</SelectItem>
+                              <SelectItem value="Carpentry">Carpentry</SelectItem>
+                              <SelectItem value="Roofing">Roofing</SelectItem>
+                              <SelectItem value="HVAC">HVAC (Heating & Cooling)</SelectItem>
+                              <SelectItem value="Pest Control">Pest Control</SelectItem>
+                              <SelectItem value="Security & Alarm Systems">Security & Alarm Systems</SelectItem>
+                              <SelectItem value="Interior Design">Interior Design</SelectItem>
+                              <SelectItem value="Catering & Food Services">Catering & Food Services</SelectItem>
+                              <SelectItem value="Photography & Videography">Photography & Videography</SelectItem>
+                              <SelectItem value="Event Planning">Event Planning</SelectItem>
+                              <SelectItem value="IT & Computer Services">IT & Computer Services</SelectItem>
+                              <SelectItem value="Tutoring & Education">Tutoring & Education</SelectItem>
+                              <SelectItem value="Pet Care & Grooming">Pet Care & Grooming</SelectItem>
+                              <SelectItem value="Beauty & Personal Care">Beauty & Personal Care</SelectItem>
+                              <SelectItem value="Fitness & Training">Fitness & Training</SelectItem>
+                              <SelectItem value="Auto Repair & Maintenance">Auto Repair & Maintenance</SelectItem>
+                              <SelectItem value="Locksmith">Locksmith</SelectItem>
+                              <SelectItem value="Pool Maintenance">Pool Maintenance</SelectItem>
+                              <SelectItem value="Tiling">Tiling</SelectItem>
+                              <SelectItem value="Welding & Metalwork">Welding & Metalwork</SelectItem>
+                              <SelectItem value="Upholstery">Upholstery</SelectItem>
+                              <SelectItem value="Delivery Services">Delivery Services</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -871,6 +919,11 @@ const SupplierDashboard = () => {
                                 <Badge variant={service.is_active ? "default" : "secondary"}>
                                   {service.is_active ? "Active" : "Inactive"}
                                 </Badge>
+                                {service.category && (
+                                  <Badge variant="outline">
+                                    {service.category}
+                                  </Badge>
+                                )}
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
                               <p className="font-semibold text-foreground">
