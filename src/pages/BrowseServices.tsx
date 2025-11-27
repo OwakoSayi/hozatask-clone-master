@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { ExternalLink } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -26,6 +27,7 @@ interface ServiceOption {
   location_area: string;
   category: string;
   is_active: boolean;
+  supplier_id: string;
 }
 
 const BrowseServices = () => {
@@ -264,6 +266,18 @@ const BrowseServices = () => {
                         <span className="text-xs text-muted-foreground capitalize">
                           {option.category}
                         </span>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/supplier/${option.supplier_id}`);
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Supplier
+                        </Button>
                       </div>
                       <Checkbox
                         checked={selectedIds.includes(option.id)}

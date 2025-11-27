@@ -135,10 +135,19 @@ const AdminDashboard = () => {
 
       if (fetchError) throw fetchError;
 
+      // When approving a supplier for the first time, check if they submitted with an auth user
+      let updateData: any = { status };
+      
+      if (status === "Active" && !supplier.user_id) {
+        // Check if there's an auth user with matching email from supplier submission
+        // For now, we'll just approve without linking to user
+        // In future, could link based on email matching
+      }
+
       // Update supplier status
       const { error: updateError } = await supabase
         .from("suppliers")
-        .update({ status })
+        .update(updateData)
         .eq("id", id);
 
       if (updateError) throw updateError;

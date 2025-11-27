@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { ExternalLink } from "lucide-react";
 
 interface ServiceOption {
   id: string;
@@ -17,6 +18,7 @@ interface ServiceOption {
   price_max: number;
   location_area: string;
   is_active: boolean;
+  supplier_id: string;
 }
 
 const CategoryListings = () => {
@@ -166,8 +168,22 @@ const CategoryListings = () => {
                     />
                   )}
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-xl">{option.title}</CardTitle>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <CardTitle className="text-xl mb-1">{option.title}</CardTitle>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/supplier/${option.supplier_id}`);
+                          }}
+                        >
+                          <ExternalLink className="h-3 w-3 mr-1" />
+                          View Supplier
+                        </Button>
+                      </div>
                       <Checkbox
                         checked={selectedIds.includes(option.id)}
                         onCheckedChange={() => toggleSelection(option.id)}
