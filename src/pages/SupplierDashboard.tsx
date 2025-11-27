@@ -198,15 +198,61 @@ const SupplierDashboard = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImageToCrop(reader.result as string);
-      setCropTarget(target);
-      setCropDialogOpen(true);
-    };
-    reader.readAsDataURL(file);
+    if (target === 'service') {
+      // Direct upload for service images (no cropping)
+      handleServiceImageUpload(file);
+    } else {
+      // Cropping for profile photos
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCropTarget(target);
+        setCropDialogOpen(true);
+      };
+      reader.readAsDataURL(file);
+    }
     
     event.target.value = '';
+  };
+
+  const handleServiceImageUpload = async (file: File) => {
+    setUploadingImage(true);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const fileName = `${session.user.id}-${Date.now()}-${file.name}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { 
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, images: [...formData.images, publicUrl] });
+
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleCropComplete = async (croppedImage: Blob) => {
@@ -711,13 +757,13 @@ const SupplierDashboard = () => {
                         {/* Image Management */}
                         <div>
                           <Label>Service Photos</Label>
-                          <div className="grid grid-cols-3 gap-3 mt-2 mb-3">
+                           <div className="grid grid-cols-3 gap-3 mt-2 mb-3">
                             {formData.images.map((imageUrl, index) => (
-                              <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                              <div key={index} className="relative rounded-lg overflow-hidden border border-border">
                                 <img 
                                   src={imageUrl} 
                                   alt={`Service ${index + 1}`}
-                                  className="w-full h-full object-cover"
+                                  className="w-full h-auto"
                                 />
                                 <Button
                                   type="button"
