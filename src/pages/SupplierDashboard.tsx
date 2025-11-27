@@ -420,7 +420,10 @@ const SupplierDashboard = () => {
     );
   }
 
-  const profileImage = supplier?.images?.[0] || "/placeholder.svg";
+  const profileImagesArray = profileData.images
+    ? profileData.images.split(",").map((url) => url.trim()).filter(Boolean)
+    : supplier?.images || [];
+  const profileImage = (profileImagesArray as string[])[0] || "/placeholder.svg";
   const initials = supplier?.business_name.substring(0, 2).toUpperCase() || "SP";
 
   return (
