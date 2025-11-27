@@ -32,8 +32,20 @@ const AdminMFASetup = () => {
       // Check if MFA is already enrolled
       const { data: factors } = await supabase.auth.mfa.listFactors();
       if (factors && factors.totp && factors.totp.length > 0) {
-        navigate("/admin");
-        return;
+        const existingFactor = factors.totp[0];
+        
+        // Check if factor is verified
+        if (existingFactor.status === 'verified') {
+          navigate("/admin");
+          return;
+        }
+        
+        // If unverified, unenroll and start fresh
+        try {
+          await supabase.auth.mfa.unenroll({ factorId: existingFactor.id });
+        } catch (unenrollError) {
+          console.error("Unenroll error:", unenrollError);
+        }
       }
 
       // Enroll for MFA
