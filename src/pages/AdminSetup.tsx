@@ -19,33 +19,46 @@ const AdminSetup = () => {
     setLoading(true);
 
     try {
-      // Create the user account
+      // Try to sign up first
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (authError) throw authError;
+      let userId: string;
 
-      if (!authData.user) {
-        throw new Error("Failed to create user account");
-      }
-
-      // Add user to admin_users table
-      const { error: adminError } = await supabase
-        .from("admin_users")
-        .insert({
-          email: email,
-          user_id: authData.user.id,
+      // If user already exists, try to sign in instead
+      if (authError?.message?.includes("already registered")) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
 
-      if (adminError) throw adminError;
+        if (signInError) throw signInError;
+        if (!signInData.user) throw new Error("Failed to authenticate");
+        
+        userId = signInData.user.id;
+      } else {
+        if (authError) throw authError;
+        if (!authData.user) throw new Error("Failed to create user account");
+        userId = authData.user.id;
+      }
+
+      // Use the secure function to add admin privileges
+      const { error: rpcError } = await supabase.rpc("create_admin_user", {
+        user_email: email,
+        user_user_id: userId,
+      });
+
+      if (rpcError) throw rpcError;
 
       toast({
         title: "Admin Account Created!",
         description: "You can now log in to the admin dashboard",
       });
 
+      // Sign out and redirect to login
+      await supabase.auth.signOut();
       navigate("/admin/login");
     } catch (error: any) {
       console.error("Setup error:", error);

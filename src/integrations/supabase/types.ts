@@ -213,6 +213,10 @@ export type Database = {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
       }
+      create_admin_user: {
+        Args: { user_email: string; user_user_id: string }
+        Returns: undefined
+      }
       is_admin: { Args: { user_id: string }; Returns: boolean }
     }
     Enums: {
