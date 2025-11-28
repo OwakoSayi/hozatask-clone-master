@@ -306,16 +306,28 @@ const BrowseServices = () => {
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
               {filteredOptions.map((option) => {
+                const isSelected = selectedIds.includes(option.id);
                 return (
                   <Card
                     key={option.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg overflow-hidden ${
-                      selectedIds.includes(option.id)
+                    className={`cursor-pointer transition-all hover:shadow-lg overflow-hidden relative ${
+                      isSelected
                         ? "ring-2 ring-primary"
                         : ""
                     }`}
                     onClick={() => setSelectedService(option)}
                   >
+                    {/* Selection Checkbox */}
+                    <div 
+                      className="absolute top-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:bg-background transition-colors"
+                      onClick={(e) => toggleSelection(option.id, e)}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        className="h-5 w-5 pointer-events-none"
+                      />
+                    </div>
+                    
                     {option.images && option.images.length > 0 && (
                       <div className="relative group">
                         <Carousel className="w-full">
@@ -337,8 +349,8 @@ const BrowseServices = () => {
                             </>
                           )}
                         </Carousel>
-                        {selectedIds.includes(option.id) && (
-                          <Badge className="absolute top-2 right-2 bg-primary z-10">
+                        {isSelected && (
+                          <Badge className="absolute top-2 left-2 bg-primary z-10">
                             Option {selectedIds.indexOf(option.id) + 1}
                           </Badge>
                         )}
