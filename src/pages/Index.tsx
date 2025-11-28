@@ -5,8 +5,28 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CATEGORIES } from "@/config/categories";
 
+// Featured categories to display on homepage
+const featuredCategories = [
+  "Event Planning",
+  "Gardening & Landscaping",
+  "House Cleaning",
+  "Handyman Services",
+  "Moving & Delivery",
+  "Makeup Artists",
+  "Photography",
+  "Catering",
+  "Plumbing",
+  "Electrical Work",
+  "Furniture Assembly",
+  "Painting & Decorating"
+];
+
 const Index = () => {
   const navigate = useNavigate();
+  
+  const displayCategories = CATEGORIES.filter(cat => 
+    featuredCategories.includes(cat.name)
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -37,8 +57,8 @@ const Index = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
             Choose Your Service Category
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {CATEGORIES.map((category) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {displayCategories.map((category) => (
               <Card
                 key={category.slug}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-border"
@@ -50,6 +70,15 @@ const Index = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+          <div className="text-center mt-8">
+            <Button 
+              variant="outline" 
+              size="lg"
+              onClick={() => navigate('/browse')}
+            >
+              View All {CATEGORIES.length} Categories
+            </Button>
           </div>
         </div>
       </section>
