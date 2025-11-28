@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,7 @@ const getPricingTier = (price: number) => {
 const BrowseServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [options, setOptions] = useState<ServiceOption[]>([]);
   const [filteredOptions, setFilteredOptions] = useState<ServiceOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -68,6 +69,12 @@ const BrowseServices = () => {
   useEffect(() => {
     loadServiceOptions();
     fetchUserCity();
+    
+    // Check for category parameter in URL
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      setCategoryFilter(categoryParam);
+    }
 
     // Subscribe to realtime updates for service_options
     const channel = supabase
