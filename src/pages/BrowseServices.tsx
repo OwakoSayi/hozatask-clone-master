@@ -139,9 +139,9 @@ const BrowseServices = () => {
         .from("profiles")
         .select("city")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
       
-      if (profile) {
+      if (profile?.city) {
         setUserCity(profile.city);
       }
     }

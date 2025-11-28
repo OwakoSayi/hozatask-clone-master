@@ -63,10 +63,19 @@ const BookingForm = () => {
         .from("profiles")
         .select("*")
         .eq("id", session.user.id)
-        .single();
+        .maybeSingle();
 
       if (profile) {
         setUserProfile(profile);
+      } else {
+        // No profile exists, use metadata as fallback
+        const metadata = session.user.user_metadata;
+        setUserProfile({
+          full_name: metadata?.full_name || "",
+          phone: metadata?.phone || "",
+          address: metadata?.address || "",
+          city: metadata?.city || "",
+        });
       }
 
       // Load service options to show supplier info
