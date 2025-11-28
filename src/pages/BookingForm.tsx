@@ -100,6 +100,9 @@ const BookingForm = () => {
 
       if (profile) {
         setUserProfile(profile);
+        // Pre-fill event address with user's profile address
+        setFormData(prev => ({ ...prev, event_address: profile.address }));
+        
         // Check if profile is complete
         if (!profile.phone || !profile.address || !profile.city) {
           setProfileNeedsUpdate(true);
@@ -120,6 +123,11 @@ const BookingForm = () => {
           city: metadata?.city || "",
         };
         setUserProfile(profileData);
+        
+        // Pre-fill event address if available
+        if (profileData.address) {
+          setFormData(prev => ({ ...prev, event_address: profileData.address }));
+        }
         
         // If any data is missing, show profile completion
         if (!profileData.phone || !profileData.address || !profileData.city) {
