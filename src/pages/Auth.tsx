@@ -18,6 +18,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -91,6 +94,9 @@ const Auth = () => {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: fullName,
+            phone: phone,
+            address: address,
+            city: city,
           },
         },
       });
@@ -196,6 +202,39 @@ const Auth = () => {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Phone Number</Label>
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="+27 12 345 6789"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-address">Street Address</Label>
+                    <Input
+                      id="signup-address"
+                      type="text"
+                      placeholder="123 Main Street"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-city">City</Label>
+                    <Input
+                      id="signup-city"
+                      type="text"
+                      placeholder="Johannesburg"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
                       required
                     />
                   </div>
