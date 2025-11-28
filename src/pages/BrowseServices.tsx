@@ -26,6 +26,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { ChevronRight } from "lucide-react";
+import { getGroupedCategories, CATEGORY_GROUPS } from "@/config/categories";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface ServiceOption {
   id: string;
@@ -66,6 +68,8 @@ const BrowseServices = () => {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
   const [userCity, setUserCity] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<string>("all");
+  const groupedCategories = getGroupedCategories();
 
   useEffect(() => {
     loadServiceOptions();
@@ -263,6 +267,7 @@ const BrowseServices = () => {
   const clearFilters = () => {
     setCategoryFilter("all");
     setLocationSearch("");
+    setSelectedGroup("all");
     setSearchParams({});
   };
 
@@ -315,24 +320,7 @@ const BrowseServices = () => {
           </p>
 
           {/* Filters */}
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Category</label>
-              <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
+          <div className="grid md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="text-sm font-medium mb-2 block">Location</label>
               <Input
@@ -352,6 +340,58 @@ const BrowseServices = () => {
               </Button>
             </div>
           </div>
+
+          {/* Category Groups */}
+          <Tabs value={selectedGroup} onValueChange={setSelectedGroup} className="mb-6">
+            <TabsList className="w-full h-auto flex-wrap justify-start gap-2 bg-muted/30 p-2">
+              <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                All Services
+              </TabsTrigger>
+              {CATEGORY_GROUPS.map((group) => (
+                <TabsTrigger 
+                  key={group} 
+                  value={group}
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  {group}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            <TabsContent value="all" className="mt-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {categories.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant={categoryFilter === cat ? "default" : "outline"}
+                    onClick={() => handleCategoryChange(cat)}
+                    className="h-auto py-3 px-2 flex flex-col items-center gap-2 text-xs"
+                  >
+                    <span className="text-xl">{groupedCategories.flatMap(g => g.categories).find(c => c.name === cat)?.icon || "📋"}</span>
+                    <span className="text-center line-clamp-2">{cat}</span>
+                  </Button>
+                ))}
+              </div>
+            </TabsContent>
+
+            {groupedCategories.map(({ group, categories: groupCats }) => (
+              <TabsContent key={group} value={group} className="mt-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {groupCats.map((cat) => (
+                    <Button
+                      key={cat.name}
+                      variant={categoryFilter === cat.name ? "default" : "outline"}
+                      onClick={() => handleCategoryChange(cat.name)}
+                      className="h-auto py-3 px-2 flex flex-col items-center gap-2 text-xs"
+                    >
+                      <span className="text-xl">{cat.icon}</span>
+                      <span className="text-center line-clamp-2">{cat.name}</span>
+                    </Button>
+                  ))}
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
 
           <p className="text-sm text-muted-foreground">
             {filteredOptions.length} service{filteredOptions.length !== 1 ? "s" : ""} found • {selectedIds.length}/3 selected
