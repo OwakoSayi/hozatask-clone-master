@@ -18,6 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface ServiceOption {
   id: string;
@@ -310,18 +317,32 @@ const BrowseServices = () => {
                     onClick={() => setSelectedService(option)}
                   >
                     {option.images && option.images.length > 0 && (
-                      <div className="relative">
-                        <img
-                          src={option.images[0]}
-                          alt={option.title}
-                          className="w-full h-80 object-cover"
-                        />
+                      <div className="relative group">
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {option.images.map((img, idx) => (
+                              <CarouselItem key={idx}>
+                                <img
+                                  src={img}
+                                  alt={`${option.title} ${idx + 1}`}
+                                  className="w-full h-80 object-cover"
+                                />
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          {option.images.length > 1 && (
+                            <>
+                              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </>
+                          )}
+                        </Carousel>
                         {selectedIds.includes(option.id) && (
-                          <Badge className="absolute top-2 right-2 bg-primary">
+                          <Badge className="absolute top-2 right-2 bg-primary z-10">
                             Option {selectedIds.indexOf(option.id) + 1}
                           </Badge>
                         )}
-                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs capitalize">
+                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs capitalize z-10">
                           {option.category}
                         </Badge>
                       </div>
