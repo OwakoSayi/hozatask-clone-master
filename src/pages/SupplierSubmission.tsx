@@ -11,11 +11,7 @@ import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
-
-const categories = [
-  "Jumping Castles", "Makeup", "Event Décor", "Grass Cutting", 
-  "Cleaning", "Tents", "DJ", "Catering", "Photography", "Handyman"
-];
+import { CATEGORY_NAMES } from "@/config/categories";
 
 const SupplierSubmission = () => {
   const navigate = useNavigate();
@@ -240,7 +236,7 @@ const SupplierSubmission = () => {
                 }
               >
                 <option value="">Select a category</option>
-                {categories.map((cat) => (
+                {CATEGORY_NAMES.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>

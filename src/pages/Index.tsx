@@ -3,17 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-
-const categories = [
-  { name: "Event Planning", icon: "🎉", slug: "event-planning" },
-  { name: "Gardening & Landscaping", icon: "🌿", slug: "gardening-landscaping" },
-  { name: "Cleaning Services", icon: "🧹", slug: "cleaning" },
-  { name: "Handyman Services", icon: "🔧", slug: "handyman" },
-  { name: "Moving & Delivery", icon: "🚚", slug: "moving" },
-  { name: "Beauty & Personal Care", icon: "💄", slug: "beauty" },
-  { name: "Photography & Videography", icon: "📸", slug: "photography" },
-  { name: "Food & Catering", icon: "🍽️", slug: "catering" },
-];
+import { CATEGORIES } from "@/config/categories";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -48,7 +38,7 @@ const Index = () => {
             Choose Your Service Category
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <Card
                 key={category.slug}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-border"
