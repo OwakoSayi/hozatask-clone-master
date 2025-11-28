@@ -254,33 +254,37 @@ const SupplierProfile = () => {
                     </p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Contact details will be shared after booking confirmation
-                </p>
+                <div className="mt-4">
+                  <Button
+                    onClick={async () => {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      
+                      if (!session) {
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please login to view contact details",
+                        });
+                        navigate("/auth", { state: { returnTo: `/supplier/${id}` } });
+                        return;
+                      }
+
+                      toast({
+                        title: "Book a Service",
+                        description: "Select a service below and complete booking to view contact details",
+                      });
+                    }}
+                    className="w-full md:w-auto"
+                  >
+                    Show Contact Details
+                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Contact details available after booking confirmation
+                  </p>
+                </div>
               </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Work Gallery */}
-        {supplier.images && supplier.images.length > 1 && (
-          <Card className="mb-6 border-border shadow-sm">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4 text-foreground">Portfolio</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {supplier.images.slice(1).map((image, index) => (
-                  <div key={index} className="aspect-square rounded-lg overflow-hidden bg-muted">
-                    <img
-                      src={image}
-                      alt={`Work ${index + 1}`}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Services Offered */}
         {serviceOptions.length > 0 && (
