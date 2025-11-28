@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { Star, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Clock, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -240,23 +241,11 @@ const SupplierProfile = () => {
                   </p>
                 </div>
 
-                {/* Contact & Location */}
+                {/* Location & Pricing */}
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-foreground">{supplier.location || "Location not specified"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                      <span className="text-foreground">{supplier.phone}</span>
-                    </div>
-                    {supplier.whatsapp && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MessageCircle className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="text-foreground">{supplier.whatsapp}</span>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                    <span className="text-foreground">{supplier.location || "Location not specified"}</span>
                   </div>
                   <div className="bg-muted/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Typical pricing</p>
@@ -265,6 +254,9 @@ const SupplierProfile = () => {
                     </p>
                   </div>
                 </div>
+                <p className="text-sm text-muted-foreground mt-4">
+                  Contact details will be shared after booking confirmation
+                </p>
               </div>
             </div>
           </CardContent>
@@ -292,39 +284,66 @@ const SupplierProfile = () => {
 
         {/* Services Offered */}
         {serviceOptions.length > 0 && (
-          <Card className="mb-6 border-border shadow-sm">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4 text-foreground">Services & Pricing</h2>
-              <div className="grid md:grid-cols-2 gap-4">
-                {serviceOptions.map((option) => (
-                  <Card
-                    key={option.id}
-                    className="cursor-pointer hover:shadow-md hover:border-primary/20 transition-all border-border"
-                    onClick={() => handleServiceSelect(option.id)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-foreground mb-1">{option.title}</h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {option.description}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold text-lg text-foreground">
-                          R{option.price} {option.time_frame && `/ ${option.time_frame.replace('per ', '')}`}
-                        </span>
-                        <Button size="sm" variant="default">
-                          Book
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Services & Pricing</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {serviceOptions.map((option) => (
+                <Card
+                  key={option.id}
+                  className="cursor-pointer transition-all hover:shadow-lg overflow-hidden"
+                  onClick={() => handleServiceSelect(option.id)}
+                >
+                  {option.images && option.images.length > 0 && (
+                    <div className="relative group">
+                      <Carousel className="w-full">
+                        <CarouselContent>
+                          {option.images.map((img, idx) => (
+                            <CarouselItem key={idx}>
+                              <img
+                                src={img}
+                                alt={`${option.title} ${idx + 1}`}
+                                className="w-full h-80 object-cover"
+                              />
+                            </CarouselItem>
+                          ))}
+                        </CarouselContent>
+                        {option.images.length > 1 && (
+                          <>
+                            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </>
+                        )}
+                      </Carousel>
+                    </div>
+                  )}
+                  <CardContent className="pt-4 pb-4">
+                    <div className="mb-3">
+                      <p className="text-lg font-bold text-foreground mb-1">
+                        R{option.price}
+                        {option.time_frame && (
+                          <span className="text-sm font-normal text-muted-foreground ml-1">
+                            / {option.time_frame.replace('per ', '')}
+                          </span>
+                        )}
+                      </p>
+                      <h3 className="font-semibold text-foreground text-base mb-1">{option.title}</h3>
+                      {option.location_area && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {option.location_area}
+                        </p>
+                      )}
+                    </div>
+                    {option.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {option.description}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* Reviews Section */}
