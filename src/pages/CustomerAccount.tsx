@@ -62,6 +62,7 @@ export default function CustomerAccount() {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showImageCrop, setShowImageCrop] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [supplierStatus, setSupplierStatus] = useState<{ status: string; business_name: string } | null>(null);
 
   useEffect(() => {
     checkUser();
@@ -78,7 +79,8 @@ export default function CustomerAccount() {
     setUser(session.user);
     await Promise.all([
       fetchProfile(session.user.id),
-      fetchBookings(session.user.id)
+      fetchBookings(session.user.id),
+      fetchSupplierStatus(session.user.id)
     ]);
   };
 
@@ -94,6 +96,18 @@ export default function CustomerAccount() {
     } else {
       setProfile(data);
       setEditedProfile(data);
+    }
+  };
+
+  const fetchSupplierStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("suppliers")
+      .select("status, business_name")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (data) {
+      setSupplierStatus(data);
     }
   };
 
@@ -469,6 +483,43 @@ export default function CustomerAccount() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Supplier Status */}
+              {supplierStatus && (
+                <Card className="mt-4">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Supplier Account</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Status</span>
+                        <Badge variant={supplierStatus.status === "Active" ? "default" : "secondary"}>
+                          {supplierStatus.status}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Business Name</p>
+                        <p className="font-medium">{supplierStatus.business_name}</p>
+                      </div>
+                      {supplierStatus.status === "Pending" && (
+                        <p className="text-xs text-muted-foreground bg-secondary/50 p-3 rounded-md">
+                          Your service listing is under review. We'll notify you once it's approved!
+                        </p>
+                      )}
+                      {supplierStatus.status === "Active" && (
+                        <Button 
+                          variant="outline" 
+                          className="w-full mt-2"
+                          onClick={() => navigate("/supplier-dashboard")}
+                        >
+                          Go to Dashboard
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Bookings Section */}
