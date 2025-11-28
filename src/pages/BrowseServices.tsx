@@ -381,55 +381,49 @@ const BrowseServices = () => {
       <Footer />
 
       <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
           {selectedService && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedService.title}</DialogTitle>
-              </DialogHeader>
-              
-              <div className="space-y-6">
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Left side - Images */}
+              <div className="bg-muted">
                 {selectedService.images && selectedService.images.length > 0 && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {selectedService.images.map((img, idx) => (
-                      <img
-                        key={idx}
-                        src={img}
-                        alt={`${selectedService.title} ${idx + 1}`}
-                        className="w-full h-64 object-cover rounded-lg"
-                      />
-                    ))}
-                  </div>
+                  <Carousel className="w-full h-full">
+                    <CarouselContent>
+                      {selectedService.images.map((img, idx) => (
+                        <CarouselItem key={idx}>
+                          <img
+                            src={img}
+                            alt={`${selectedService.title} ${idx + 1}`}
+                            className="w-full h-[90vh] object-cover"
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {selectedService.images.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2" />
+                        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2" />
+                      </>
+                    )}
+                  </Carousel>
                 )}
+              </div>
 
-                <div className="flex items-center gap-3 p-4 bg-muted rounded-lg">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={selectedService.supplier?.images?.[0]} />
-                    <AvatarFallback>{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{selectedService.supplier?.business_name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedService.supplier?.contact_name}</p>
-                  </div>
+              {/* Right side - Details */}
+              <div className="p-6 space-y-6 overflow-y-auto max-h-[90vh]">
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">{selectedService.title}</h2>
+                  <Badge variant="secondary" className="capitalize">{selectedService.category}</Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-3xl font-bold">R{selectedService.price}</div>
+                  <p className="text-sm text-muted-foreground">{selectedService.time_frame}</p>
                 </div>
 
                 <div>
-                  <Badge variant="secondary" className="mb-3 capitalize">{selectedService.category}</Badge>
                   <h3 className="font-semibold mb-2">Description</h3>
                   <p className="text-muted-foreground">{selectedService.description}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-1">Price</h3>
-                    <p className="text-2xl font-bold">R{selectedService.price}</p>
-                    <p className="text-sm text-muted-foreground">{selectedService.time_frame}</p>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-1">Booking Fee</h3>
-                    <p className="text-2xl font-bold">R{getPricingTier(selectedService.price).fee}</p>
-                    <p className="text-sm text-muted-foreground">{getPricingTier(selectedService.price).range}</p>
-                  </div>
                 </div>
 
                 <div>
@@ -437,33 +431,50 @@ const BrowseServices = () => {
                   <p className="text-muted-foreground">{selectedService.location_area}</p>
                 </div>
 
-                <div className="flex gap-2">
+                <div>
+                  <h3 className="font-semibold mb-1">Booking Fee</h3>
+                  <p className="text-xl font-bold">R{getPricingTier(selectedService.price).fee}</p>
+                  <p className="text-sm text-muted-foreground">{getPricingTier(selectedService.price).range}</p>
+                </div>
+
+                <div 
+                  className="flex items-center gap-3 p-4 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                  onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}
+                >
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={selectedService.supplier?.images?.[0]} />
+                    <AvatarFallback>{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <p className="font-semibold">{selectedService.supplier?.business_name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedService.supplier?.contact_name}</p>
+                  </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </div>
+
+                <div className="pt-4 border-t">
                   {selectedIds.includes(selectedService.id) ? (
                     <Button 
                       variant="outline" 
-                      className="flex-1"
+                      className="w-full"
                       onClick={(e) => toggleSelection(selectedService.id, e)}
                     >
                       Remove from Selection
                     </Button>
                   ) : (
                     <Button 
-                      className="flex-1"
+                      className="w-full"
                       onClick={(e) => toggleSelection(selectedService.id, e)}
                       disabled={selectedIds.length >= 3}
                     >
                       Add as Option {selectedIds.length + 1}
                     </Button>
                   )}
-                  <Button 
-                    variant="secondary"
-                    onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}
-                  >
-                    View Supplier Profile
-                  </Button>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </DialogContent>
       </Dialog>
