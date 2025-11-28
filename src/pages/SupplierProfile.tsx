@@ -191,15 +191,19 @@ const SupplierProfile = () => {
                     <span className="font-medium">{completedJobs} jobs completed</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-accent" />
-                    <span className="font-medium">Quick responder</span>
+                    <Award className="h-4 w-4 text-accent" />
+                    <span className="font-medium">{serviceOptions.length} active listing{serviceOptions.length !== 1 ? 's' : ''}</span>
                   </div>
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-2 text-sm">
-                      <Award className="h-4 w-4 text-accent" />
-                      <span className="font-medium">{reviews.length} reviews</span>
+                      <Star className="h-4 w-4 text-accent fill-accent" />
+                      <span className="font-medium">{averageRating.toFixed(1)} rating ({reviews.length} reviews)</span>
                     </div>
                   )}
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-accent" />
+                    <span className="font-medium">Quick responder</span>
+                  </div>
                 </div>
               </div>
 
@@ -239,6 +243,39 @@ const SupplierProfile = () => {
                   <p className="text-muted-foreground leading-relaxed">
                     {supplier.description || "No description provided."}
                   </p>
+                </div>
+
+                {/* Strengths Section */}
+                <div className="mb-6">
+                  <h2 className="text-lg font-semibold mb-3 text-foreground">Strengths</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {completedJobs > 0 && (
+                      <Badge variant="outline" className="text-sm px-3 py-1.5">
+                        <CheckCircle className="h-3 w-3 mr-1.5" />
+                        {completedJobs}+ Jobs Completed
+                      </Badge>
+                    )}
+                    {reviews.length > 0 && averageRating >= 4 && (
+                      <Badge variant="outline" className="text-sm px-3 py-1.5">
+                        <Star className="h-3 w-3 mr-1.5 fill-current" />
+                        Highly Rated
+                      </Badge>
+                    )}
+                    {serviceOptions.length > 0 && (
+                      <Badge variant="outline" className="text-sm px-3 py-1.5">
+                        <Award className="h-3 w-3 mr-1.5" />
+                        {serviceOptions.length} Service{serviceOptions.length !== 1 ? 's' : ''} Available
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-sm px-3 py-1.5">
+                      <Clock className="h-3 w-3 mr-1.5" />
+                      Quick Response Time
+                    </Badge>
+                    <Badge variant="outline" className="text-sm px-3 py-1.5">
+                      <MapPin className="h-3 w-3 mr-1.5" />
+                      Local Expert
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Location & Pricing */}
