@@ -302,7 +302,7 @@ const BrowseServices = () => {
                 return (
                   <Card
                     key={option.id}
-                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                    className={`cursor-pointer transition-all hover:shadow-lg overflow-hidden ${
                       selectedIds.includes(option.id)
                         ? "ring-2 ring-primary"
                         : ""
@@ -314,7 +314,7 @@ const BrowseServices = () => {
                         <img
                           src={option.images[0]}
                           alt={option.title}
-                          className="w-full h-64 object-cover rounded-t-lg"
+                          className="w-full h-80 object-cover"
                         />
                         {selectedIds.includes(option.id) && (
                           <Badge className="absolute top-2 right-2 bg-primary">
@@ -326,11 +326,14 @@ const BrowseServices = () => {
                         </Badge>
                       </div>
                     )}
-                    <CardContent className="pt-4">
-                      <div className="font-bold text-xl mb-2">
+                    <CardContent className="pt-4 pb-4">
+                      <div className="font-bold text-xl mb-1">
                         R{option.price}
+                        <span className="text-sm text-muted-foreground font-normal ml-1">
+                          {option.time_frame}
+                        </span>
                       </div>
-                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{option.title}</h3>
+                      <h3 className="font-semibold text-base mb-1 line-clamp-2">{option.title}</h3>
                       <p className="text-sm text-muted-foreground">{option.location_area}</p>
                     </CardContent>
                   </Card>
