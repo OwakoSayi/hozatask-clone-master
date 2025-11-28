@@ -229,7 +229,7 @@ const BookingForm = () => {
           email: session?.user?.email || "",
           address: formData.event_address,
           event_date: formData.event_date,
-          event_time: formData.event_time,
+          event_time: formData.event_time || null,
           event_type: formData.event_type,
           notes: formData.notes,
           selected_option_ids: selectedIds,
