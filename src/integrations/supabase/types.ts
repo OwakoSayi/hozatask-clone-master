@@ -106,6 +106,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          address: string
+          city: string
+          created_at: string | null
+          full_name: string
+          id: string
+          phone: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          city: string
+          created_at?: string | null
+          full_name: string
+          id: string
+          phone: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          city?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          phone?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string | null

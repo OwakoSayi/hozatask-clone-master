@@ -9,11 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ServiceOption {
   id: string;
   title: string;
   supplier_id: string;
+}
+
+interface UserProfile {
+  full_name: string;
+  phone: string;
+  address: string;
+  city: string;
 }
 
 const BookingForm = () => {
@@ -22,11 +31,12 @@ const BookingForm = () => {
   const { toast } = useToast();
   const selectedIds = location.state?.selectedIds || [];
 
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 3;
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
-    customer_name: "",
-    phone: "",
-    email: "",
-    address: "",
+    event_address: "",
     event_date: "",
     event_time: "",
     event_type: "",
@@ -46,6 +56,17 @@ const BookingForm = () => {
         });
         navigate("/auth", { state: { returnTo: "/booking", selectedIds } });
         return;
+      }
+
+      // Load user profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
       }
 
       // Load service options to show supplier info
@@ -68,29 +89,38 @@ const BookingForm = () => {
     return null;
   }
 
+  const handleNext = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      // Get current user
       const { data: { session } } = await supabase.auth.getSession();
       
-      // In a real app, integrate payment here first
-      // For MVP, we'll just create the booking
       const { data, error } = await supabase
         .from("bookings")
         .insert({
-          customer_name: formData.customer_name,
-          phone: formData.phone,
-          email: formData.email,
-          address: formData.address,
+          customer_name: userProfile?.full_name || "",
+          phone: userProfile?.phone || "",
+          email: session?.user?.email || "",
+          address: formData.event_address,
           event_date: formData.event_date,
           event_time: formData.event_time,
           event_type: formData.event_type,
           notes: formData.notes,
           selected_option_ids: selectedIds,
-          booking_fee_paid: true, // Set to true after payment
+          booking_fee_paid: true,
           status: "New",
           user_id: session?.user?.id || null,
         })
@@ -117,6 +147,8 @@ const BookingForm = () => {
     }
   };
 
+  const progressPercentage = (currentStep / totalSteps) * 100;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -126,17 +158,28 @@ const BookingForm = () => {
           ← Back
         </Button>
 
-        {serviceOptions.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Selected Services</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
+            <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
+          </div>
+          <Progress value={progressPercentage} className="h-2" />
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* Step 1: Review Services */}
+          {currentStep === 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Selected Services</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {serviceOptions.map((service) => (
-                  <div key={service.id} className="flex items-center justify-between p-3 bg-muted/30 rounded">
-                    <span>{service.title}</span>
+                  <div key={service.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                    <span className="font-medium">{service.title}</span>
                     <Button
+                      type="button"
                       variant="link"
                       size="sm"
                       onClick={() => navigate(`/supplier/${service.supplier_id}`)}
@@ -145,135 +188,171 @@ const BookingForm = () => {
                     </Button>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                <div className="pt-4">
+                  <Button type="button" onClick={handleNext} className="w-full" size="lg">
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">Complete Your Booking</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label htmlFor="customer_name">Full Name *</Label>
-                <Input
-                  id="customer_name"
-                  required
-                  value={formData.customer_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, customer_name: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="address">Event Address *</Label>
-                <Input
-                  id="address"
-                  required
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData({ ...formData, address: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+          {/* Step 2: Event Details */}
+          {currentStep === 2 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Event Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div>
-                  <Label htmlFor="event_date">Event Date *</Label>
+                  <Label htmlFor="event_address">Event Address *</Label>
                   <Input
-                    id="event_date"
-                    type="date"
+                    id="event_address"
                     required
-                    value={formData.event_date}
+                    placeholder="Where will the event take place?"
+                    value={formData.event_address}
                     onChange={(e) =>
-                      setFormData({ ...formData, event_date: e.target.value })
+                      setFormData({ ...formData, event_address: e.target.value })
                     }
                   />
                 </div>
-                <div>
-                  <Label htmlFor="event_time">Event Time</Label>
-                  <Input
-                    id="event_time"
-                    type="time"
-                    value={formData.event_time}
-                    onChange={(e) =>
-                      setFormData({ ...formData, event_time: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
 
-              <div>
-                <Label htmlFor="event_type">Event Type</Label>
-                <Input
-                  id="event_type"
-                  placeholder="e.g., Birthday Party, Wedding"
-                  value={formData.event_type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, event_type: e.target.value })
-                  }
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="notes">Additional Notes</Label>
-                <Textarea
-                  id="notes"
-                  rows={4}
-                  placeholder="Any special requirements or details..."
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                />
-              </div>
-
-              <Card className="bg-primary/5">
-                <CardContent className="py-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold text-foreground">Booking Fee</span>
-                    <span className="text-2xl font-bold text-primary">R50</span>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="event_date">Event Date *</Label>
+                    <Input
+                      id="event_date"
+                      type="date"
+                      required
+                      value={formData.event_date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, event_date: e.target.value })
+                      }
+                    />
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    This fee allows us to secure availability and match you to the best supplier from your selected options.
-                  </p>
-                </CardContent>
-              </Card>
+                  <div>
+                    <Label htmlFor="event_time">Event Time</Label>
+                    <Input
+                      id="event_time"
+                      type="time"
+                      value={formData.event_time}
+                      onChange={(e) =>
+                        setFormData({ ...formData, event_time: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-                {submitting ? "Processing..." : "Proceed to Secure Booking"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <div>
+                  <Label htmlFor="event_type">Event Type</Label>
+                  <Input
+                    id="event_type"
+                    placeholder="e.g., Birthday Party, Wedding, Corporate Event"
+                    value={formData.event_type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, event_type: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="notes">Additional Notes</Label>
+                  <Textarea
+                    id="notes"
+                    rows={4}
+                    placeholder="Any special requirements or details..."
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  <Button type="button" onClick={handlePrevious} variant="outline" className="flex-1">
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button type="button" onClick={handleNext} className="flex-1">
+                    Continue
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Step 3: Review & Confirm */}
+          {currentStep === 3 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Review Your Booking</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Personal Information */}
+                <div>
+                  <h3 className="font-semibold mb-3">Your Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="text-muted-foreground">Name:</span> {userProfile?.full_name}</p>
+                    <p><span className="text-muted-foreground">Phone:</span> {userProfile?.phone}</p>
+                    <p><span className="text-muted-foreground">City:</span> {userProfile?.city}</p>
+                  </div>
+                </div>
+
+                {/* Event Information */}
+                <div>
+                  <h3 className="font-semibold mb-3">Event Information</h3>
+                  <div className="space-y-2 text-sm">
+                    <p><span className="text-muted-foreground">Address:</span> {formData.event_address}</p>
+                    <p><span className="text-muted-foreground">Date:</span> {formData.event_date}</p>
+                    {formData.event_time && (
+                      <p><span className="text-muted-foreground">Time:</span> {formData.event_time}</p>
+                    )}
+                    {formData.event_type && (
+                      <p><span className="text-muted-foreground">Type:</span> {formData.event_type}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected Services */}
+                <div>
+                  <h3 className="font-semibold mb-3">Selected Services</h3>
+                  <div className="space-y-2">
+                    {serviceOptions.map((service) => (
+                      <div key={service.id} className="p-3 bg-muted/30 rounded text-sm">
+                        {service.title}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Booking Fee */}
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="py-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold text-foreground">Booking Fee</span>
+                      <span className="text-2xl font-bold text-primary">R50</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      This fee allows us to secure availability and match you to the best supplier from your selected options.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <div className="flex gap-3">
+                  <Button type="button" onClick={handlePrevious} variant="outline" className="flex-1">
+                    <ChevronLeft className="mr-2 h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button type="submit" className="flex-1" size="lg" disabled={submitting}>
+                    {submitting ? "Processing..." : "Confirm Booking"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </form>
       </div>
 
       <Footer />

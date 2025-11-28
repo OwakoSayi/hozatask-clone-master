@@ -63,9 +63,11 @@ const BrowseServices = () => {
   const [locationSearch, setLocationSearch] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
+  const [userCity, setUserCity] = useState<string | null>(null);
 
   useEffect(() => {
     loadServiceOptions();
+    fetchUserCity();
 
     // Subscribe to realtime updates for service_options
     const channel = supabase
@@ -115,8 +117,35 @@ const BrowseServices = () => {
       );
     }
 
+    // Sort by user's city if logged in and not searching
+    if (userCity && !locationSearch) {
+      filtered = filtered.sort((a, b) => {
+        const aIsLocal = a.location_area?.toLowerCase().includes(userCity.toLowerCase());
+        const bIsLocal = b.location_area?.toLowerCase().includes(userCity.toLowerCase());
+        
+        if (aIsLocal && !bIsLocal) return -1;
+        if (!aIsLocal && bIsLocal) return 1;
+        return 0;
+      });
+    }
+
     setFilteredOptions(filtered);
-  }, [options, categoryFilter, locationSearch]);
+  }, [options, categoryFilter, locationSearch, userCity]);
+
+  const fetchUserCity = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("city")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (profile) {
+        setUserCity(profile.city);
+      }
+    }
+  };
 
   const loadServiceOptions = async () => {
     try {
