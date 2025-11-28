@@ -1,15 +1,16 @@
 import { Card } from "@/components/ui/card";
+import { CATEGORIES } from "@/config/categories";
 import cleaningIcon from "@/assets/cleaning-icon.jpg";
 import handymanIcon from "@/assets/handyman-icon.jpg";
 import movingIcon from "@/assets/moving-icon.jpg";
 import assemblyIcon from "@/assets/assembly-icon.jpg";
 
-const categories = [
+const categoryDetails = [
   {
     title: "Cleaning",
     description: "Home cleaning, deep cleaning, organizing",
     icon: cleaningIcon,
-    price: "From $40/hr",
+    price: "From R250/hr",
   },
   {
     title: "Handyman",
@@ -42,7 +43,7 @@ export const Categories = () => {
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categories.map((category, index) => (
+          {categoryDetails.map((category, index) => (
             <Card 
               key={index}
               className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group bg-card border-border hover:border-primary/30 animate-fade-in"
