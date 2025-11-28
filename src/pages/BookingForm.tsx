@@ -33,6 +33,12 @@ const BookingForm = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
+  const [profileNeedsUpdate, setProfileNeedsUpdate] = useState(false);
+  const [tempProfileData, setTempProfileData] = useState({
+    phone: "",
+    address: "",
+    city: "",
+  });
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
@@ -67,15 +73,37 @@ const BookingForm = () => {
 
       if (profile) {
         setUserProfile(profile);
+        // Check if profile is complete
+        if (!profile.phone || !profile.address || !profile.city) {
+          setProfileNeedsUpdate(true);
+          setCurrentStep(0); // Start at profile completion step
+          setTempProfileData({
+            phone: profile.phone || "",
+            address: profile.address || "",
+            city: profile.city || "",
+          });
+        }
       } else {
         // No profile exists, use metadata as fallback
         const metadata = session.user.user_metadata;
-        setUserProfile({
+        const profileData = {
           full_name: metadata?.full_name || "",
           phone: metadata?.phone || "",
           address: metadata?.address || "",
           city: metadata?.city || "",
-        });
+        };
+        setUserProfile(profileData);
+        
+        // If any data is missing, show profile completion
+        if (!profileData.phone || !profileData.address || !profileData.city) {
+          setProfileNeedsUpdate(true);
+          setCurrentStep(0);
+          setTempProfileData({
+            phone: profileData.phone,
+            address: profileData.address,
+            city: profileData.city,
+          });
+        }
       }
 
       // Load service options to show supplier info
@@ -105,8 +133,49 @@ const BookingForm = () => {
   };
 
   const handlePrevious = () => {
-    if (currentStep > 1) {
+    if (currentStep > (profileNeedsUpdate ? 0 : 1)) {
       setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { error } = await supabase
+        .from("profiles")
+        .upsert({
+          id: session.user.id,
+          full_name: userProfile?.full_name || "",
+          phone: tempProfileData.phone,
+          address: tempProfileData.address,
+          city: tempProfileData.city,
+        });
+
+      if (error) throw error;
+
+      setUserProfile({
+        ...userProfile!,
+        phone: tempProfileData.phone,
+        address: tempProfileData.address,
+        city: tempProfileData.city,
+      });
+
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been saved",
+      });
+
+      setProfileNeedsUpdate(false);
+      setCurrentStep(1);
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save profile",
+        variant: "destructive",
+      });
     }
   };
 
@@ -168,15 +237,78 @@ const BookingForm = () => {
         </Button>
 
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
-            <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
+        {currentStep > 0 && (
+          <div className="mb-8">
+            <div className="flex justify-between mb-2">
+              <span className="text-sm font-medium">Step {currentStep} of {totalSteps}</span>
+              <span className="text-sm text-muted-foreground">{Math.round(progressPercentage)}%</span>
+            </div>
+            <Progress value={progressPercentage} className="h-2" />
           </div>
-          <Progress value={progressPercentage} className="h-2" />
-        </div>
+        )}
 
         <form onSubmit={handleSubmit}>
+          {/* Step 0: Complete Profile */}
+          {currentStep === 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Complete Your Profile</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <p className="text-sm text-muted-foreground">
+                  Please complete your profile information to continue with your booking.
+                </p>
+
+                <div>
+                  <Label htmlFor="profile_phone">Phone Number *</Label>
+                  <Input
+                    id="profile_phone"
+                    type="tel"
+                    required
+                    placeholder="+27 12 345 6789"
+                    value={tempProfileData.phone}
+                    onChange={(e) =>
+                      setTempProfileData({ ...tempProfileData, phone: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="profile_address">Street Address *</Label>
+                  <Input
+                    id="profile_address"
+                    type="text"
+                    required
+                    placeholder="123 Main Street"
+                    value={tempProfileData.address}
+                    onChange={(e) =>
+                      setTempProfileData({ ...tempProfileData, address: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="profile_city">City *</Label>
+                  <Input
+                    id="profile_city"
+                    type="text"
+                    required
+                    placeholder="Johannesburg"
+                    value={tempProfileData.city}
+                    onChange={(e) =>
+                      setTempProfileData({ ...tempProfileData, city: e.target.value })
+                    }
+                  />
+                </div>
+
+                <Button type="button" onClick={handleSaveProfile} className="w-full" size="lg">
+                  Save & Continue
+                  <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Step 1: Review Services */}
           {currentStep === 1 && (
             <Card>
