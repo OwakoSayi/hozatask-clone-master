@@ -33,6 +33,7 @@ interface Supplier {
   status: string;
   price: number;
   images: string[];
+  location: string;
 }
 
 const AdminDashboard = () => {
@@ -390,6 +391,9 @@ const AdminDashboard = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Phone:</span> {supplier.phone}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Location:</span> {supplier.location}
                     </div>
                     <div>
                       <span className="text-muted-foreground">Price:</span> R{supplier.price}
