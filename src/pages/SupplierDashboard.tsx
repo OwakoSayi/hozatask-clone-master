@@ -153,11 +153,15 @@ const SupplierDashboard = () => {
       // Get all service option IDs for this supplier
       const serviceOptionIds = optionsData?.map(opt => opt.id) || [];
 
-      // Fetch bookings where selected_option_ids contains any of the supplier's service IDs
+      // Fetch bookings where:
+      // 1. Their service is selected AND not yet matched (opportunities)
+      // 2. OR they are the matched supplier (their bookings)
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select("*")
-        .or(`matched_supplier_id.eq.${supplierData.id},selected_option_ids.cs.{${serviceOptionIds.join(',')}}`)
+        .or(
+          `and(selected_option_ids.cs.{${serviceOptionIds.join(',')}},matched_supplier_id.is.null),matched_supplier_id.eq.${supplierData.id}`
+        )
         .order("created_at", { ascending: false });
 
       if (bookingsError) throw bookingsError;
@@ -969,46 +973,105 @@ const SupplierDashboard = () => {
 
           {/* Bookings Tab */}
           <TabsContent value="bookings">
-            <Card className="border-border shadow-sm">
-              <CardHeader>
-                <CardTitle>Your Bookings</CardTitle>
-                <CardDescription>Manage incoming requests</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {bookings.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-muted-foreground">No bookings yet</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {bookings.map((booking) => (
-                      <Card key={booking.id} className="border-border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-semibold text-foreground">{booking.customer_name}</p>
-                              <p className="text-sm text-muted-foreground">{booking.phone}</p>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {new Date(booking.event_date).toLocaleDateString()}
-                              </p>
-                              {booking.notes && (
-                                <p className="text-sm text-muted-foreground mt-2">{booking.notes}</p>
-                              )}
+            <div className="space-y-6">
+              {/* Active Opportunities */}
+              <Card className="border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle>Active Opportunities</CardTitle>
+                  <CardDescription>Customers who selected your services - respond quickly to win the booking!</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {bookings.filter(b => !b.matched_supplier_id).length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No active opportunities</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {bookings.filter(b => !b.matched_supplier_id).map((booking) => (
+                        <Card key={booking.id} className="border-primary/20 bg-primary/5">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge variant="secondary" className="bg-primary/10 text-primary">New Opportunity</Badge>
+                                </div>
+                                <p className="font-semibold text-foreground">{booking.customer_name}</p>
+                                <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                                <p className="text-sm text-muted-foreground">{booking.email}</p>
+                                <p className="text-sm text-foreground mt-2">
+                                  <span className="font-medium">Event Date:</span> {new Date(booking.event_date).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-foreground">
+                                  <span className="font-medium">Address:</span> {booking.address}
+                                </p>
+                                {booking.event_type && (
+                                  <p className="text-sm text-foreground">
+                                    <span className="font-medium">Event Type:</span> {booking.event_type}
+                                  </p>
+                                )}
+                                {booking.notes && (
+                                  <p className="text-sm text-muted-foreground mt-2 italic">"{booking.notes}"</p>
+                                )}
+                                <p className="text-xs text-muted-foreground mt-3">
+                                  Contact customer directly to secure this booking
+                                </p>
+                              </div>
                             </div>
-                            <Badge variant={
-                              booking.status === "Completed" ? "default" :
-                              booking.status === "New" ? "secondary" : "outline"
-                            }>
-                              {booking.status}
-                            </Badge>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Booking History */}
+              <Card className="border-border shadow-sm">
+                <CardHeader>
+                  <CardTitle>Your Matched Bookings</CardTitle>
+                  <CardDescription>Bookings where you were selected by the customer</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {bookings.filter(b => b.matched_supplier_id === supplier?.id).length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No matched bookings yet</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {bookings.filter(b => b.matched_supplier_id === supplier?.id).map((booking) => (
+                        <Card key={booking.id} className="border-border">
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="font-semibold text-foreground">{booking.customer_name}</p>
+                                <p className="text-sm text-muted-foreground">{booking.phone}</p>
+                                <p className="text-sm text-muted-foreground">{booking.email}</p>
+                                <p className="text-sm text-foreground mt-2">
+                                  <span className="font-medium">Event Date:</span> {new Date(booking.event_date).toLocaleDateString()}
+                                </p>
+                                <p className="text-sm text-foreground">
+                                  <span className="font-medium">Address:</span> {booking.address}
+                                </p>
+                                {booking.notes && (
+                                  <p className="text-sm text-muted-foreground mt-2">{booking.notes}</p>
+                                )}
+                              </div>
+                              <Badge variant={
+                                booking.status === "Completed" ? "default" :
+                                booking.status === "Confirmed" ? "default" :
+                                booking.status === "New" ? "secondary" : "outline"
+                              }>
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Reviews Tab */}

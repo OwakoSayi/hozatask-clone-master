@@ -64,6 +64,33 @@ const BookingForm = () => {
         return;
       }
 
+      // Check if user is a supplier trying to book their own services
+      if (selectedIds.length > 0) {
+        const { data: supplierData } = await supabase
+          .from("suppliers")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+
+        if (supplierData) {
+          const { data: serviceData } = await supabase
+            .from("service_options")
+            .select("id")
+            .eq("supplier_id", supplierData.id)
+            .in("id", selectedIds);
+
+          if (serviceData && serviceData.length > 0) {
+            toast({
+              title: "Not Allowed",
+              description: "Suppliers cannot book their own services",
+              variant: "destructive",
+            });
+            navigate("/");
+            return;
+          }
+        }
+      }
+
       // Load user profile
       const { data: profile } = await supabase
         .from("profiles")
