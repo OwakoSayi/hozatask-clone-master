@@ -54,7 +54,7 @@ const Index = () => {
               <Card
                 key={category.slug}
                 className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-border"
-                onClick={() => navigate(`/category/${category.slug}`)}
+                onClick={() => navigate(`/browse?category=${encodeURIComponent(category.name)}`)}
               >
                 <CardContent className="flex flex-col items-center justify-center p-6 text-center">
                   <div className="text-5xl mb-3">{category.icon}</div>
