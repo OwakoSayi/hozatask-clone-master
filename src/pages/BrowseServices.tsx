@@ -457,7 +457,7 @@ const BrowseServices = () => {
                 <div className="pt-4 border-t">
                   {selectedIds.includes(selectedService.id) ? (
                     <Button 
-                      variant="outline" 
+                      variant="destructive" 
                       className="w-full"
                       onClick={(e) => toggleSelection(selectedService.id, e)}
                     >
