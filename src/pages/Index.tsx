@@ -5,16 +5,14 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
 const categories = [
-  { name: "Jumping Castles", icon: "🏰", slug: "jumping-castles" },
-  { name: "Makeup Artists", icon: "💄", slug: "makeup" },
-  { name: "Event Décor", icon: "🎨", slug: "decor" },
-  { name: "Grass Cutting", icon: "🌿", slug: "grass-cutting" },
+  { name: "Event Planning", icon: "🎉", slug: "event-planning" },
+  { name: "Gardening & Landscaping", icon: "🌿", slug: "gardening-landscaping" },
   { name: "Cleaning Services", icon: "🧹", slug: "cleaning" },
-  { name: "Tents & Gazebos", icon: "⛺", slug: "tents" },
-  { name: "DJ Services", icon: "🎵", slug: "dj" },
-  { name: "Catering", icon: "🍽️", slug: "catering" },
-  { name: "Photography", icon: "📸", slug: "photography" },
-  { name: "Handyman", icon: "🔧", slug: "handyman" },
+  { name: "Handyman Services", icon: "🔧", slug: "handyman" },
+  { name: "Moving & Delivery", icon: "🚚", slug: "moving" },
+  { name: "Beauty & Personal Care", icon: "💄", slug: "beauty" },
+  { name: "Photography & Videography", icon: "📸", slug: "photography" },
+  { name: "Food & Catering", icon: "🍽️", slug: "catering" },
 ];
 
 const Index = () => {
