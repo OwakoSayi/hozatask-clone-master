@@ -25,6 +25,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { ChevronRight } from "lucide-react";
 
 interface ServiceOption {
   id: string;
@@ -275,6 +276,24 @@ const BrowseServices = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
+      
+      {/* Breadcrumb Navigation */}
+      <div className="container mx-auto px-4 py-4">
+        <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+          <button 
+            onClick={() => navigate("/")}
+            className="hover:text-foreground transition-colors"
+          >
+            Home
+          </button>
+          {categoryFilter !== "all" && (
+            <>
+              <ChevronRight size={16} />
+              <span className="text-foreground font-medium">{categoryFilter}</span>
+            </>
+          )}
+        </nav>
+      </div>
       
       <div className="container mx-auto px-4 py-8 flex-1">
         <div className="mb-8">
