@@ -76,11 +76,6 @@ export const Header = () => {
           <Button variant="ghost" onClick={() => navigate("/browse")}>
             Browse Services
           </Button>
-          {!user && (
-            <Button variant="ghost" onClick={() => navigate("/supplier-submission")}>
-              List Service
-            </Button>
-          )}
           {user && isSupplier && (
             <Button variant="ghost" onClick={() => navigate("/supplier-dashboard")}>
               My Dashboard
@@ -91,8 +86,8 @@ export const Header = () => {
               <Button variant="ghost" onClick={() => navigate("/my-account")}>
                 My Account
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate("/link-supplier-account")}>
-                Link Supplier Account
+              <Button variant="outline" size="sm" onClick={() => navigate("/supplier-submission")}>
+                List a Service
               </Button>
             </>
           )}

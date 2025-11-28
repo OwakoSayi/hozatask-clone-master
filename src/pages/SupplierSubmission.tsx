@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +18,8 @@ const SupplierSubmission = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [uploading, setUploading] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     business_name: "",
@@ -33,6 +35,43 @@ const SupplierSubmission = () => {
 
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      navigate("/auth");
+      return;
+    }
+
+    setUser(session.user);
+
+    // Check if user already has a supplier account
+    const { data: existingSupplier } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (existingSupplier) {
+      if (existingSupplier.status === "Active") {
+        navigate("/supplier-dashboard");
+      } else {
+        toast({
+          title: "Application Pending",
+          description: "Your service listing is under review. We'll notify you once it's approved.",
+        });
+        navigate("/my-account");
+      }
+      return;
+    }
+
+    setLoading(false);
+  };
 
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
@@ -123,10 +162,13 @@ const SupplierSubmission = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+
     setSubmitting(true);
 
     try {
       const { error } = await supabase.from("suppliers").insert({
+        user_id: user.id,
         business_name: formData.business_name,
         contact_name: formData.contact_name,
         phone: formData.phone,
@@ -143,11 +185,11 @@ const SupplierSubmission = () => {
       if (error) throw error;
 
       toast({
-        title: "Submission Successful!",
-        description: "We'll review your listing and get back to you soon.",
+        title: "Service Listed!",
+        description: "Your listing is under review. We'll notify you once it's approved and your supplier account is activated.",
       });
 
-      navigate("/");
+      navigate("/my-account");
     } catch (error) {
       console.error("Error submitting supplier:", error);
       toast({
@@ -369,6 +411,18 @@ const SupplierSubmission = () => {
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
