@@ -150,7 +150,7 @@ const BrowseServices = () => {
   const toggleSelection = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     
-    const option = filteredOptions.find(opt => opt.id === id);
+    const option = options.find(opt => opt.id === id);
     if (!option) return;
 
     if (selectedIds.includes(id)) {
@@ -164,9 +164,9 @@ const BrowseServices = () => {
         return;
       }
 
-      // Check category compatibility
+      // Check category compatibility - always check against all options
       if (selectedIds.length > 0) {
-        const firstSelected = filteredOptions.find(opt => opt.id === selectedIds[0]);
+        const firstSelected = options.find(opt => opt.id === selectedIds[0]);
         if (firstSelected && firstSelected.category !== option.category) {
           toast({
             title: "Category Mismatch",
@@ -179,7 +179,7 @@ const BrowseServices = () => {
 
       // Check pricing range compatibility
       if (selectedIds.length > 0) {
-        const firstSelected = filteredOptions.find(opt => opt.id === selectedIds[0]);
+        const firstSelected = options.find(opt => opt.id === selectedIds[0]);
         if (firstSelected) {
           const firstTier = getPricingTier(firstSelected.price);
           const currentTier = getPricingTier(option.price);
