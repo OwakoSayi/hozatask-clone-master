@@ -196,8 +196,21 @@ const SupplierProfile = () => {
                   </div>
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-2 text-sm">
-                      <Star className="h-4 w-4 text-accent fill-accent" />
-                      <span className="font-medium">{averageRating.toFixed(1)} rating ({reviews.length} reviews)</span>
+                      <div className="flex items-center gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3 w-3 ${
+                              i < Math.floor(averageRating)
+                                ? "fill-accent text-accent"
+                                : i < averageRating
+                                ? "fill-accent/50 text-accent"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="font-medium">{averageRating.toFixed(1)} stars ({reviews.length} reviews)</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-sm">
@@ -212,27 +225,36 @@ const SupplierProfile = () => {
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h1 className="text-3xl font-bold text-foreground mb-1">
-                      {supplier.business_name}
+                      {supplier.contact_name}
                     </h1>
-                    <p className="text-lg text-muted-foreground">{supplier.title}</p>
+                    <p className="text-lg text-muted-foreground">{supplier.business_name}</p>
                   </div>
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-lg">
-                      <Star className="h-5 w-5 fill-primary text-primary" />
-                      <span className="text-2xl font-bold text-foreground">
-                        {averageRating.toFixed(1)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        ({reviews.length})
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-5 w-5 ${
+                              i < Math.floor(averageRating)
+                                ? "fill-primary text-primary"
+                                : i < averageRating
+                                ? "fill-primary/50 text-primary"
+                                : "text-muted-foreground/30"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xl font-bold text-foreground">
+                          {averageRating.toFixed(1)}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </div>
                   )}
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="secondary" className="text-sm px-3 py-1">
-                    {supplier.category}
-                  </Badge>
                 </div>
 
                 <Separator className="my-4" />
@@ -258,7 +280,7 @@ const SupplierProfile = () => {
                     {reviews.length > 0 && averageRating >= 4 && (
                       <Badge variant="outline" className="text-sm px-3 py-1.5">
                         <Star className="h-3 w-3 mr-1.5 fill-current" />
-                        Highly Rated
+                        Highly Rated ({averageRating.toFixed(1)} stars)
                       </Badge>
                     )}
                     {serviceOptions.length > 0 && (
@@ -267,14 +289,6 @@ const SupplierProfile = () => {
                         {serviceOptions.length} Service{serviceOptions.length !== 1 ? 's' : ''} Available
                       </Badge>
                     )}
-                    <Badge variant="outline" className="text-sm px-3 py-1.5">
-                      <Clock className="h-3 w-3 mr-1.5" />
-                      Quick Response Time
-                    </Badge>
-                    <Badge variant="outline" className="text-sm px-3 py-1.5">
-                      <MapPin className="h-3 w-3 mr-1.5" />
-                      Local Expert
-                    </Badge>
                   </div>
                 </div>
 
