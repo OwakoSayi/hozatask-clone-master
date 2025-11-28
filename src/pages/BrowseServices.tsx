@@ -56,7 +56,7 @@ const getPricingTier = (price: number) => {
 const BrowseServices = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [options, setOptions] = useState<ServiceOption[]>([]);
   const [filteredOptions, setFilteredOptions] = useState<ServiceOption[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -263,6 +263,16 @@ const BrowseServices = () => {
   const clearFilters = () => {
     setCategoryFilter("all");
     setLocationSearch("");
+    setSearchParams({});
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+    if (value === "all") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category: value });
+    }
   };
 
   if (loading) {
@@ -308,7 +318,7 @@ const BrowseServices = () => {
           <div className="grid md:grid-cols-3 gap-4 mb-6">
             <div>
               <label className="text-sm font-medium mb-2 block">Category</label>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={handleCategoryChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="All Categories" />
                 </SelectTrigger>
