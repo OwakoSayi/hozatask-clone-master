@@ -150,10 +150,14 @@ const SupplierDashboard = () => {
       if (optionsError) throw optionsError;
       setServiceOptions(optionsData || []);
 
+      // Get all service option IDs for this supplier
+      const serviceOptionIds = optionsData?.map(opt => opt.id) || [];
+
+      // Fetch bookings where selected_option_ids contains any of the supplier's service IDs
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
         .select("*")
-        .eq("matched_supplier_id", supplierData.id)
+        .or(`matched_supplier_id.eq.${supplierData.id},selected_option_ids.cs.{${serviceOptionIds.join(',')}}`)
         .order("created_at", { ascending: false });
 
       if (bookingsError) throw bookingsError;
