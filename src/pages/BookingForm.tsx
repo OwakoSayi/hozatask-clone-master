@@ -51,6 +51,20 @@ const BookingForm = () => {
 
   const [submitting, setSubmitting] = useState(false);
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
+  const [paypalLoaded, setPaypalLoaded] = useState(false);
+
+  // Load PayPal script dynamically
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=ZAR`;
+    script.async = true;
+    script.onload = () => setPaypalLoaded(true);
+    document.body.appendChild(script);
+    
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -214,8 +228,78 @@ const BookingForm = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handlePayPalPayment = () => {
+    if (!paypalLoaded || !window.paypal) {
+      toast({
+        title: "Error",
+        description: "PayPal is not loaded. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSubmitting(true);
+
+    window.paypal.Buttons({
+      createOrder: async () => {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-paypal-order`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'create' }),
+          }
+        );
+        const order = await response.json();
+        return order.id;
+      },
+      onApprove: async (data: any) => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-paypal-order`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                action: 'capture',
+                orderId: data.orderID
+              }),
+            }
+          );
+          const captureData = await response.json();
+
+          if (captureData.status === 'COMPLETED') {
+            await handleSubmit(data.orderID);
+          } else {
+            throw new Error('Payment not completed');
+          }
+        } catch (error) {
+          console.error('Payment error:', error);
+          toast({
+            title: "Payment Failed",
+            description: "Failed to process payment. Please try again.",
+            variant: "destructive",
+          });
+          setSubmitting(false);
+        }
+      },
+      onError: (err: any) => {
+        console.error('PayPal error:', err);
+        toast({
+          title: "Payment Error",
+          description: "An error occurred with PayPal. Please try again.",
+          variant: "destructive",
+        });
+        setSubmitting(false);
+      }
+    }).render('#paypal-button-container');
+  };
+
+  const handleSubmit = async (paymentIntentId: string) => {
     setSubmitting(true);
 
     try {
@@ -234,6 +318,7 @@ const BookingForm = () => {
           notes: formData.notes,
           selected_option_ids: selectedIds,
           booking_fee_paid: true,
+          payment_intent_id: paymentIntentId,
           status: "New",
           user_id: session?.user?.id || null,
         })
@@ -262,6 +347,13 @@ const BookingForm = () => {
 
   const progressPercentage = (currentStep / totalSteps) * 100;
 
+  // Render PayPal button when on step 3
+  useEffect(() => {
+    if (currentStep === 3 && paypalLoaded && !submitting) {
+      handlePayPalPayment();
+    }
+  }, [currentStep, paypalLoaded]);
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -282,7 +374,7 @@ const BookingForm = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <div>
           {/* Step 0: Complete Profile */}
           {currentStep === 0 && (
             <Card>
@@ -516,19 +608,23 @@ const BookingForm = () => {
                   </CardContent>
                 </Card>
 
-                <div className="flex gap-3">
-                  <Button type="button" onClick={handlePrevious} variant="outline" className="flex-1">
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Previous
-                  </Button>
-                  <Button type="submit" className="flex-1" size="lg" disabled={submitting}>
-                    {submitting ? "Processing..." : "Confirm Booking"}
-                  </Button>
+                <Button type="button" onClick={handlePrevious} variant="outline" className="w-full mb-4">
+                  <ChevronLeft className="mr-2 h-4 w-4" />
+                  Previous
+                </Button>
+
+                {/* PayPal Payment */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-center mb-4">Pay with PayPal to confirm booking</p>
+                  <div id="paypal-button-container" className="min-h-[150px]"></div>
+                  {submitting && (
+                    <p className="text-sm text-center text-muted-foreground">Processing payment...</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
-        </form>
+        </div>
       </div>
 
       <Footer />
