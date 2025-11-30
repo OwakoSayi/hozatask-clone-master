@@ -17,10 +17,20 @@ interface Booking {
   address: string;
   event_date: string;
   event_time: string;
+  event_type: string;
+  notes: string;
   status: string;
   matched_supplier_name: string;
   matched_supplier_contact: string;
   created_at: string;
+  selected_option_ids: string[];
+}
+
+interface ServiceOption {
+  id: string;
+  title: string;
+  category: string;
+  price: number;
 }
 
 interface Supplier {
@@ -41,6 +51,7 @@ const AdminDashboard = () => {
   const { toast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,16 +88,19 @@ const AdminDashboard = () => {
 
   const loadData = async () => {
     try {
-      const [bookingsRes, suppliersRes] = await Promise.all([
+      const [bookingsRes, suppliersRes, serviceOptionsRes] = await Promise.all([
         supabase.from("bookings").select("*").order("created_at", { ascending: false }),
         supabase.from("suppliers").select("*").order("created_at", { ascending: false }),
+        supabase.from("service_options").select("id, title, category, price"),
       ]);
 
       if (bookingsRes.error) throw bookingsRes.error;
       if (suppliersRes.error) throw suppliersRes.error;
+      if (serviceOptionsRes.error) throw serviceOptionsRes.error;
 
       setBookings(bookingsRes.data || []);
       setSuppliers(suppliersRes.data || []);
+      setServiceOptions(serviceOptionsRes.data || []);
     } catch (error) {
       console.error("Error loading data:", error);
       toast({
@@ -315,9 +329,44 @@ const AdminDashboard = () => {
                       <span className="text-muted-foreground">Event Date:</span> {booking.event_date}
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Address:</span> {booking.address}
+                      <span className="text-muted-foreground">Event Time:</span> {booking.event_time || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Event Type:</span> {booking.event_type || "Not specified"}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Location:</span> {booking.address}
                     </div>
                   </div>
+
+                  {booking.notes && (
+                    <div className="bg-muted/20 p-3 rounded">
+                      <p className="text-sm font-semibold text-muted-foreground mb-1">Notes:</p>
+                      <p className="text-sm">{booking.notes}</p>
+                    </div>
+                  )}
+
+                  {booking.selected_option_ids && booking.selected_option_ids.length > 0 && (
+                    <div className="bg-muted/30 p-3 rounded">
+                      <p className="text-sm font-semibold text-muted-foreground mb-2">Services Requested:</p>
+                      <div className="space-y-2">
+                        {booking.selected_option_ids.map((optionId) => {
+                          const service = serviceOptions.find(s => s.id === optionId);
+                          return service ? (
+                            <div key={optionId} className="text-sm bg-background p-2 rounded border border-border">
+                              <p className="font-medium">{service.title}</p>
+                              <p className="text-muted-foreground text-xs">
+                                {service.category} • R{service.price}
+                              </p>
+                            </div>
+                          ) : (
+                            <p key={optionId} className="text-xs text-muted-foreground">Service ID: {optionId}</p>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
 
                   {booking.status === "New" && (
                     <div className="space-y-2">
