@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Copy } from "lucide-react";
 
 interface Booking {
   id: string;
@@ -294,6 +295,14 @@ const AdminDashboard = () => {
     navigate("/admin/login");
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -338,8 +347,16 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                    <div className="flex items-center gap-2">
                       <span className="text-muted-foreground">Phone:</span> {booking.phone}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 w-6 p-0"
+                        onClick={() => copyToClipboard(booking.phone, "Phone number")}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Email:</span> {booking.email}
@@ -384,8 +401,18 @@ const AdminDashboard = () => {
                                   <p className="text-xs font-semibold text-muted-foreground">Supplier:</p>
                                   <p className="text-xs font-medium">{service.suppliers.business_name}</p>
                                   <p className="text-xs text-muted-foreground">Contact: {service.suppliers.contact_name}</p>
-                                  <div className="flex gap-2 items-center">
-                                    <p className="text-xs text-muted-foreground">Phone: {service.suppliers.phone}</p>
+                                  <div className="flex gap-2 items-center flex-wrap">
+                                    <div className="flex items-center gap-1">
+                                      <p className="text-xs text-muted-foreground">Phone: {service.suppliers.phone}</p>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-5 w-5 p-0"
+                                        onClick={() => copyToClipboard(service.suppliers.phone, "Supplier phone")}
+                                      >
+                                        <Copy className="h-3 w-3" />
+                                      </Button>
+                                    </div>
                                     {service.suppliers.whatsapp && (
                                       <a
                                         href={`https://wa.me/${service.suppliers.whatsapp.replace(/[^0-9]/g, '')}`}
