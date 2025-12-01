@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Upload, Star, TrendingUp, DollarSign, CheckCircle, X } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, Star, TrendingUp, DollarSign, CheckCircle, X, Check, XCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -71,6 +71,7 @@ const SupplierDashboard = () => {
   const [imageToCrop, setImageToCrop] = useState<string | null>(null);
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [cropTarget, setCropTarget] = useState<'profile' | 'service'>('profile');
+  const [declinedBookings, setDeclinedBookings] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     title: "",
@@ -94,6 +95,39 @@ const SupplierDashboard = () => {
 
   useEffect(() => {
     loadSupplierData();
+    
+    // Set up realtime subscription for new bookings
+    const channel = supabase
+      .channel('booking-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'bookings'
+        },
+        () => {
+          // Reload bookings when a new one is created
+          loadSupplierData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'bookings'
+        },
+        () => {
+          // Reload bookings when one is updated
+          loadSupplierData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const loadSupplierData = async () => {
@@ -454,6 +488,47 @@ const SupplierDashboard = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleAcceptBooking = async (bookingId: string) => {
+    if (!supplier) return;
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          matched_supplier_id: supplier.id,
+          matched_supplier_name: supplier.business_name,
+          matched_supplier_contact: supplier.phone,
+          status: "Matched",
+        })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Booking Accepted!",
+        description: "Customer will be notified. Contact them to finalize details.",
+      });
+      loadSupplierData();
+    } catch (error) {
+      console.error("Error accepting booking:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept booking",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeclineBooking = (bookingId: string) => {
+    if (!confirm("Are you sure you want to decline this booking opportunity?")) return;
+
+    setDeclinedBookings([...declinedBookings, bookingId]);
+    toast({
+      title: "Booking Declined",
+      description: "This opportunity has been removed from your list",
+    });
   };
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
@@ -981,16 +1056,16 @@ const SupplierDashboard = () => {
                   <CardDescription>Customers who selected your services - respond quickly to win the booking!</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {bookings.filter(b => !b.matched_supplier_id).length === 0 ? (
+                  {bookings.filter(b => !b.matched_supplier_id && !declinedBookings.includes(b.id)).length === 0 ? (
                     <div className="text-center py-12">
                       <p className="text-muted-foreground">No active opportunities</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {bookings.filter(b => !b.matched_supplier_id).map((booking) => (
+                      {bookings.filter(b => !b.matched_supplier_id && !declinedBookings.includes(b.id)).map((booking) => (
                         <Card key={booking.id} className="border-primary/20 bg-primary/5">
                           <CardContent className="p-4">
-                            <div className="flex justify-between items-start">
+                            <div className="flex justify-between items-start gap-4">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <Badge variant="secondary" className="bg-primary/10 text-primary">New Opportunity</Badge>
@@ -1012,9 +1087,24 @@ const SupplierDashboard = () => {
                                 {booking.notes && (
                                   <p className="text-sm text-muted-foreground mt-2 italic">"{booking.notes}"</p>
                                 )}
-                                <p className="text-xs text-muted-foreground mt-3">
-                                  Contact customer directly to secure this booking
-                                </p>
+                              </div>
+                              <div className="flex flex-col gap-2">
+                                <Button
+                                  onClick={() => handleAcceptBooking(booking.id)}
+                                  size="sm"
+                                  className="bg-accent hover:bg-accent/90"
+                                >
+                                  <Check className="mr-1 h-4 w-4" />
+                                  Accept
+                                </Button>
+                                <Button
+                                  onClick={() => handleDeclineBooking(booking.id)}
+                                  size="sm"
+                                  variant="outline"
+                                >
+                                  <XCircle className="mr-1 h-4 w-4" />
+                                  Decline
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
