@@ -21,9 +21,13 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [authMethod, setAuthMethod] = useState<"email" | "phone">("email");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
-    // Check if user is already logged in
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
         const returnTo = (location.state as any)?.returnTo || "/";
@@ -82,44 +86,50 @@ const Auth = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: fullName,
-            phone: phone,
-            address: address,
-            city: city,
-          },
-        },
-      });
+      if (!otpSent) {
+        // Send OTP
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: phone,
+        });
 
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          toast({
-            title: "Account Exists",
-            description: "This email is already registered. Please login instead.",
-            variant: "destructive",
-          });
-        } else {
+        if (error) {
           toast({
             title: "Error",
             description: error.message,
             variant: "destructive",
           });
+        } else {
+          setOtpSent(true);
+          toast({
+            title: "OTP Sent",
+            description: "Please check your phone for the verification code.",
+          });
         }
       } else {
-        toast({
-          title: "Success",
-          description: "Account created successfully! You can now login.",
+        // Verify OTP
+        const { error } = await supabase.auth.verifyOtp({
+          phone: phone,
+          token: otp,
+          type: "sms",
         });
+
+        if (error) {
+          toast({
+            title: "Verification Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Logged in successfully!",
+          });
+        }
       }
     } catch (error) {
       toast({
@@ -131,6 +141,191 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (authMethod === "email") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
+              full_name: fullName,
+              phone: phone,
+              address: address,
+              city: city,
+            },
+          },
+        });
+
+        if (error) {
+          if (error.message.includes("User already registered")) {
+            toast({
+              title: "Account Exists",
+              description: "This email is already registered. Please login instead.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Success",
+            description: "Account created successfully! You can now login.",
+          });
+        }
+      } else {
+        // Phone signup
+        if (!otpSent) {
+          const { error } = await supabase.auth.signInWithOtp({
+            phone: phone,
+            options: {
+              data: {
+                full_name: fullName,
+                address: address,
+                city: city,
+              },
+            },
+          });
+
+          if (error) {
+            toast({
+              title: "Error",
+              description: error.message,
+              variant: "destructive",
+            });
+          } else {
+            setOtpSent(true);
+            toast({
+              title: "OTP Sent",
+              description: "Please check your phone for the verification code.",
+            });
+          }
+        } else {
+          const { error } = await supabase.auth.verifyOtp({
+            phone: phone,
+            token: otp,
+            type: "sms",
+          });
+
+          if (error) {
+            toast({
+              title: "Verification Failed",
+              description: error.message,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Success",
+              description: "Account created successfully!",
+            });
+          }
+        }
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email Sent",
+          description: "Check your email for the password reset link.",
+        });
+        setShowForgotPassword(false);
+        setResetEmail("");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPhoneAuth = () => {
+    setOtpSent(false);
+    setOtp("");
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        
+        <div className="flex-1 flex items-center justify-center px-4 py-12">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Reset Password</CardTitle>
+              <CardDescription>
+                Enter your email address and we'll send you a link to reset your password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Link"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setShowForgotPassword(false)}
+                >
+                  Back to Login
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -152,36 +347,133 @@ const Auth = () => {
               </TabsList>
 
               <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
-                    <Input
-                      id="login-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
-                    <Input
-                      id="login-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Logging in..." : "Login"}
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant={authMethod === "email" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setAuthMethod("email"); resetPhoneAuth(); }}
+                  >
+                    Email
                   </Button>
-                </form>
+                  <Button
+                    type="button"
+                    variant={authMethod === "phone" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setAuthMethod("phone"); resetPhoneAuth(); }}
+                  >
+                    Phone
+                  </Button>
+                </div>
+
+                {authMethod === "email" ? (
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-email">Email</Label>
+                      <Input
+                        id="login-email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="login-password">Password</Label>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Logging in..." : "Login"}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="w-full text-sm"
+                      onClick={() => setShowForgotPassword(true)}
+                    >
+                      Forgot your password?
+                    </Button>
+                  </form>
+                ) : (
+                  <form onSubmit={handlePhoneLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="login-phone">Phone Number</Label>
+                      <Input
+                        id="login-phone"
+                        type="tel"
+                        placeholder="+27123456789"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        disabled={otpSent}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Include country code (e.g., +27 for South Africa)
+                      </p>
+                    </div>
+                    {otpSent && (
+                      <div className="space-y-2">
+                        <Label htmlFor="login-otp">Verification Code</Label>
+                        <Input
+                          id="login-otp"
+                          type="text"
+                          placeholder="123456"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                          required
+                          maxLength={6}
+                        />
+                      </div>
+                    )}
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Processing..." : otpSent ? "Verify Code" : "Send Code"}
+                    </Button>
+                    {otpSent && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        className="w-full text-sm"
+                        onClick={resetPhoneAuth}
+                      >
+                        Change phone number
+                      </Button>
+                    )}
+                  </form>
+                )}
               </TabsContent>
 
               <TabsContent value="signup">
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    type="button"
+                    variant={authMethod === "email" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setAuthMethod("email"); resetPhoneAuth(); }}
+                  >
+                    Email
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={authMethod === "phone" ? "default" : "outline"}
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => { setAuthMethod("phone"); resetPhoneAuth(); }}
+                  >
+                    Phone
+                  </Button>
+                </div>
+
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="signup-name">Full Name</Label>
@@ -194,28 +486,64 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-phone">Phone Number</Label>
-                    <Input
-                      id="signup-phone"
-                      type="tel"
-                      placeholder="+27 12 345 6789"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
-                    />
-                  </div>
+
+                  {authMethod === "email" ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input
+                          id="signup-email"
+                          type="email"
+                          placeholder="your@email.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="signup-phone">Phone Number (Optional)</Label>
+                        <Input
+                          id="signup-phone"
+                          type="tel"
+                          placeholder="+27 12 345 6789"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-phone-main">Phone Number</Label>
+                      <Input
+                        id="signup-phone-main"
+                        type="tel"
+                        placeholder="+27123456789"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        required
+                        disabled={otpSent}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Include country code (e.g., +27 for South Africa)
+                      </p>
+                    </div>
+                  )}
+
+                  {authMethod === "phone" && otpSent && (
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-otp">Verification Code</Label>
+                      <Input
+                        id="signup-otp"
+                        type="text"
+                        placeholder="123456"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        required
+                        maxLength={6}
+                      />
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label htmlFor="signup-address">Street Address</Label>
                     <Input
@@ -238,21 +566,42 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
+
+                  {authMethod === "email" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                  )}
+
                   <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Creating account..." : "Sign Up"}
+                    {loading 
+                      ? "Processing..." 
+                      : authMethod === "phone" && otpSent 
+                        ? "Verify & Create Account" 
+                        : authMethod === "phone" 
+                          ? "Send Verification Code" 
+                          : "Sign Up"}
                   </Button>
+
+                  {authMethod === "phone" && otpSent && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="w-full text-sm"
+                      onClick={resetPhoneAuth}
+                    >
+                      Change phone number
+                    </Button>
+                  )}
                 </form>
               </TabsContent>
             </Tabs>
