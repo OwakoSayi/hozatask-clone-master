@@ -432,12 +432,15 @@ const BrowseServices = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-bold truncate">{selectedService.title}</h2>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div 
+                      className="flex items-center gap-2 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}
+                    >
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={selectedService.supplier?.images?.[0]} />
                         <AvatarFallback className="text-xs">{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-muted-foreground truncate">{selectedService.supplier?.business_name}</span>
+                      <span className="text-sm text-muted-foreground truncate underline">{selectedService.supplier?.business_name}</span>
                     </div>
                   </div>
                 </div>
