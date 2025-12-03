@@ -20,11 +20,11 @@ const steps = [
 
 export const HowItWorks = () => {
   return (
-    <section className="py-20 bg-background">
+    <section className="py-16 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-16 space-y-4">
-          <h2 className="text-3xl lg:text-4xl font-bold">How HozaTask Works</h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+        <div className="text-center mb-12 space-y-3">
+          <h2 className="text-2xl lg:text-3xl font-bold text-foreground">How HozaTask Works</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
             Get help in three simple steps
           </p>
         </div>
@@ -36,16 +36,16 @@ export const HowItWorks = () => {
               style={{ animationDelay: `${index * 150}ms` }}
             >
               <div className="flex justify-center">
-                <div className="w-20 h-20 rounded-full bg-gradient-hero flex items-center justify-center shadow-md">
-                  <step.icon className="w-10 h-10 text-primary-foreground" />
+                <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center shadow-md">
+                  <step.icon className="w-8 h-8 text-primary-foreground" />
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="text-sm font-semibold text-primary">
                   Step {index + 1}
                 </div>
-                <h3 className="text-xl font-bold">{step.title}</h3>
-                <p className="text-muted-foreground">{step.description}</p>
+                <h3 className="text-lg font-bold text-foreground">{step.title}</h3>
+                <p className="text-muted-foreground text-sm">{step.description}</p>
               </div>
             </div>
           ))}
