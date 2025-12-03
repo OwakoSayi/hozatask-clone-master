@@ -3,14 +3,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Menu, X } from "lucide-react";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [user, setUser] = useState<any>(null);
   const [isSupplier, setIsSupplier] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,6 +39,19 @@ export const Header = () => {
       .maybeSingle();
     
     setIsSupplier(!!data);
+
+    // If user is logged in but not a supplier, check if they have an unlinkable supplier account
+    if (!data) {
+      const { data: unlinkableSupplier } = await supabase
+        .from("suppliers")
+        .select("id")
+        .is("user_id", null)
+        .eq("status", "Active")
+        .limit(1)
+        .maybeSingle();
+      
+      // Don't auto-navigate, just let them access the link page if needed
+    }
   };
 
   const handleLogout = async () => {
@@ -50,32 +61,29 @@ export const Header = () => {
       description: "You have been logged out successfully",
     });
     navigate("/");
-    setMobileMenuOpen(false);
   };
 
   return (
-    <header className="border-b border-border bg-background sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+    <header className="border-b border-border bg-background">
+      <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <h1
-          className="text-xl md:text-2xl font-bold text-primary cursor-pointer"
+          className="text-2xl font-bold text-primary cursor-pointer"
           onClick={() => navigate("/")}
         >
           HozaTask
         </h1>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-3 items-center">
-          <Button variant="ghost" size="sm" onClick={() => navigate("/browse")}>
+        <nav className="flex gap-4 items-center">
+          <Button variant="ghost" onClick={() => navigate("/browse")}>
             Browse Services
           </Button>
           {user && isSupplier && (
-            <Button variant="ghost" size="sm" onClick={() => navigate("/supplier-dashboard")}>
+            <Button variant="ghost" onClick={() => navigate("/supplier-dashboard")}>
               My Dashboard
             </Button>
           )}
           {user && !isSupplier && (
             <>
-              <Button variant="ghost" size="sm" onClick={() => navigate("/my-account")}>
+              <Button variant="ghost" onClick={() => navigate("/my-account")}>
                 My Account
               </Button>
               <Button variant="outline" size="sm" onClick={() => navigate("/supplier-submission")}>
@@ -84,73 +92,16 @@ export const Header = () => {
             </>
           )}
           {user ? (
-            <Button size="sm" onClick={handleLogout}>
+            <Button onClick={handleLogout}>
               Logout
             </Button>
           ) : (
-            <Button size="sm" onClick={() => navigate("/auth")}>
+            <Button onClick={() => navigate("/auth")}>
               Login
             </Button>
           )}
         </nav>
-
-        {/* Mobile Menu Button */}
-        <button 
-          className="md:hidden p-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
-
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background py-4 px-4 space-y-2">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start" 
-            onClick={() => { navigate("/browse"); setMobileMenuOpen(false); }}
-          >
-            Browse Services
-          </Button>
-          {user && isSupplier && (
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start"
-              onClick={() => { navigate("/supplier-dashboard"); setMobileMenuOpen(false); }}
-            >
-              My Dashboard
-            </Button>
-          )}
-          {user && !isSupplier && (
-            <>
-              <Button 
-                variant="ghost" 
-                className="w-full justify-start"
-                onClick={() => { navigate("/my-account"); setMobileMenuOpen(false); }}
-              >
-                My Account
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => { navigate("/supplier-submission"); setMobileMenuOpen(false); }}
-              >
-                List a Service
-              </Button>
-            </>
-          )}
-          {user ? (
-            <Button className="w-full" onClick={handleLogout}>
-              Logout
-            </Button>
-          ) : (
-            <Button className="w-full" onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }}>
-              Login
-            </Button>
-          )}
-        </div>
-      )}
     </header>
   );
 };
