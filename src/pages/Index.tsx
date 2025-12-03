@@ -1,3 +1,4 @@
+import { useEffect } from "react"; // Add this
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,32 +19,37 @@ const featuredCategories = [
   "Plumbing",
   "Electrical Work",
   "Furniture Assembly",
-  "Painting & Decorating"
+  "Painting & Decorating",
 ];
 
 const Index = () => {
   const navigate = useNavigate();
-  
-  const displayCategories = CATEGORIES.filter(cat => 
-    featuredCategories.includes(cat.name)
-  );
+
+  // Add the useEffect here
+  useEffect(() => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+
+    if (params.get("type") === "recovery") {
+      // Redirect to reset password page
+      window.location.hash = "/reset-password";
+    }
+  }, []);
+
+  const displayCategories = CATEGORIES.filter((cat) => featuredCategories.includes(cat.name));
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-20 px-4">
         <div className="container mx-auto text-center max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Book Trusted Event Services Instantly
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-            We Match You to the Best Available Provider
-          </p>
-          <Button 
-            size="lg" 
-            onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">Book Trusted Event Services Instantly</h1>
+          <p className="text-xl md:text-2xl text-muted-foreground mb-8">We Match You to the Best Available Provider</p>
+          <Button
+            size="lg"
+            onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
             className="text-lg px-8 py-6"
           >
             Browse Services
@@ -72,11 +78,7 @@ const Index = () => {
             ))}
           </div>
           <div className="text-center mt-8">
-            <Button 
-              variant="outline" 
-              size="lg"
-              onClick={() => navigate('/browse')}
-            >
+            <Button variant="outline" size="lg" onClick={() => navigate("/browse")}>
               View All {CATEGORIES.length} Categories
             </Button>
           </div>
@@ -120,17 +122,12 @@ const Index = () => {
           <p className="text-muted-foreground mb-8">
             Join thousands of satisfied customers who trust HozaTask for their events
           </p>
-          <Button 
-            size="lg" 
-            onClick={() => navigate('/supplier-submission')}
-            variant="outline"
-            className="mr-4"
-          >
+          <Button size="lg" onClick={() => navigate("/supplier-submission")} variant="outline" className="mr-4">
             List Your Service
           </Button>
-          <Button 
-            size="lg" 
-            onClick={() => document.getElementById('categories')?.scrollIntoView({ behavior: 'smooth' })}
+          <Button
+            size="lg"
+            onClick={() => document.getElementById("categories")?.scrollIntoView({ behavior: "smooth" })}
           >
             Book Now
           </Button>
