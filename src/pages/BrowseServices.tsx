@@ -407,74 +407,89 @@ const BrowseServices = () => {
       <Footer />
 
       <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto p-0">
-          {selectedService && <div className="grid md:grid-cols-2 gap-0">
-              {/* Left side - Images */}
-              <div className="bg-muted">
-                {selectedService.images && selectedService.images.length > 0 && <Carousel className="w-full h-full">
-                    <CarouselContent>
-                      {selectedService.images.map((img, idx) => <CarouselItem key={idx}>
-                          <img src={img} alt={`${selectedService.title} ${idx + 1}`} className="w-full h-[90vh] object-cover" />
-                        </CarouselItem>)}
-                    </CarouselContent>
-                    {selectedService.images.length > 1 && <>
-                        <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2" />
-                        <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2" />
-                      </>}
-                  </Carousel>}
-              </div>
-
-              {/* Right side - Details */}
-              <div className="p-6 space-y-6 overflow-y-auto max-h-[90vh]">
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">{selectedService.title}</h2>
-                  <Badge variant="secondary" className="capitalize">{selectedService.category}</Badge>
+        <DialogContent className="max-w-md w-[95vw] h-auto max-h-[85vh] p-0 overflow-hidden flex flex-col">
+          {selectedService && (
+            <div className="flex flex-col h-full">
+              {/* Compact Image Section */}
+              {selectedService.images && selectedService.images.length > 0 && (
+                <div className="relative h-32 sm:h-40 w-full flex-shrink-0">
+                  <img
+                    src={selectedService.images[0]}
+                    alt={selectedService.title}
+                    className="w-full h-full object-cover"
+                  />
+                  {selectedIds.includes(selectedService.id) && (
+                    <Badge className="absolute top-2 right-2 bg-primary">
+                      Option {selectedIds.indexOf(selectedService.id) + 1}
+                    </Badge>
+                  )}
                 </div>
+              )}
 
-                <div className="space-y-1">
-                  <div className="text-3xl font-bold">R{selectedService.price}</div>
-                  <p className="text-sm text-muted-foreground">{selectedService.time_frame}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-muted-foreground">{selectedService.description}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-1">Location</h3>
-                  <p className="text-muted-foreground">{selectedService.location_area}</p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-1">Booking Fee</h3>
-                  <p className="text-xl font-bold">R{getPricingTier(selectedService.price).fee}</p>
-                  <p className="text-sm text-muted-foreground">{getPricingTier(selectedService.price).range}</p>
-                </div>
-
-                <div className="flex items-center gap-3 p-4 bg-muted rounded-lg cursor-pointer hover:bg-muted/80 transition-colors" onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}>
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage src={selectedService.supplier?.images?.[0]} />
-                    <AvatarFallback>{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold">{selectedService.supplier?.business_name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedService.supplier?.contact_name}</p>
+              {/* Content - Compact for mobile */}
+              <div className="flex-1 p-4 space-y-3 overflow-hidden">
+                {/* Title & Supplier Row */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg font-bold truncate">{selectedService.title}</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={selectedService.supplier?.images?.[0]} />
+                        <AvatarFallback className="text-xs">{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm text-muted-foreground truncate">{selectedService.supplier?.business_name}</span>
+                    </div>
                   </div>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground">
-                    <path d="m9 18 6-6-6-6" />
-                  </svg>
                 </div>
 
-                <div className="pt-4 border-t">
-                  {selectedIds.includes(selectedService.id) ? <Button variant="destructive" className="w-full" onClick={e => toggleSelection(selectedService.id, e)}>
+                {/* Description - Limited */}
+                <p className="text-sm text-muted-foreground line-clamp-2">{selectedService.description}</p>
+
+                {/* Price & Details Grid */}
+                <div className="grid grid-cols-2 gap-3 py-2 border-y border-border">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Price</p>
+                    <p className="text-xl font-bold">R{selectedService.price}</p>
+                    <p className="text-xs text-muted-foreground">{selectedService.time_frame}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Booking Fee</p>
+                    <p className="text-xl font-bold">R{getPricingTier(selectedService.price).fee}</p>
+                    <p className="text-xs text-muted-foreground">{selectedService.location_area}</p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="space-y-2 pt-1">
+                  {selectedIds.includes(selectedService.id) ? (
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={(e) => toggleSelection(selectedService.id, e)}
+                    >
                       Remove from Selection
-                    </Button> : <Button className="w-full" onClick={e => toggleSelection(selectedService.id, e)} disabled={selectedIds.length >= 3}>
+                    </Button>
+                  ) : (
+                    <Button 
+                      className="w-full"
+                      onClick={(e) => toggleSelection(selectedService.id, e)}
+                      disabled={selectedIds.length >= 3}
+                    >
                       Add as Option {selectedIds.length + 1}
-                    </Button>}
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="ghost" 
+                    className="w-full text-muted-foreground"
+                    onClick={() => setSelectedService(null)}
+                  >
+                    ← Add More Options
+                  </Button>
                 </div>
               </div>
-            </div>}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>;
