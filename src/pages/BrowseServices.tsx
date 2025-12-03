@@ -407,12 +407,12 @@ const BrowseServices = () => {
       <Footer />
 
       <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
-        <DialogContent className="max-w-md w-[95vw] h-auto max-h-[85vh] p-0 overflow-hidden flex flex-col">
+        <DialogContent className="w-[95vw] h-[95vh] max-w-none p-0 overflow-hidden flex flex-col">
           {selectedService && (
             <div className="flex flex-col h-full">
-              {/* Compact Image Section */}
+              {/* Square-ish Image Section */}
               {selectedService.images && selectedService.images.length > 0 && (
-                <div className="relative h-32 sm:h-40 w-full flex-shrink-0">
+                <div className="relative aspect-[4/3] w-full flex-shrink-0">
                   <img
                     src={selectedService.images[0]}
                     alt={selectedService.title}
