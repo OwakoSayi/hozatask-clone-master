@@ -34,7 +34,9 @@ const Auth = () => {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
         const returnTo = (location.state as any)?.returnTo || "/";
         navigate(returnTo, { state: location.state });
@@ -91,7 +93,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/#/`,
         },
       });
 
@@ -177,7 +179,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${window.location.origin}/#/`,
             data: {
               full_name: fullName,
               phone: phone,
@@ -276,7 +278,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/#/reset-password`,
       });
 
       if (error) {
@@ -306,14 +308,12 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       <div className="flex-1 flex items-center justify-center px-4 py-12">
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Welcome</CardTitle>
-            <CardDescription>
-              Sign in to your account or create a new one to continue
-            </CardDescription>
+            <CardDescription>Sign in to your account or create a new one to continue</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
@@ -357,9 +357,7 @@ const Auth = () => {
                       <span className="w-full border-t" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with
-                      </span>
+                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                     </div>
                   </div>
 
@@ -369,7 +367,10 @@ const Auth = () => {
                       variant={authMethod === "email" ? "default" : "outline"}
                       size="sm"
                       className="flex-1"
-                      onClick={() => { setAuthMethod("email"); resetPhoneAuth(); }}
+                      onClick={() => {
+                        setAuthMethod("email");
+                        resetPhoneAuth();
+                      }}
                     >
                       Email
                     </Button>
@@ -378,7 +379,10 @@ const Auth = () => {
                       variant={authMethod === "phone" ? "default" : "outline"}
                       size="sm"
                       className="flex-1"
-                      onClick={() => { setAuthMethod("phone"); resetPhoneAuth(); }}
+                      onClick={() => {
+                        setAuthMethod("phone");
+                        resetPhoneAuth();
+                      }}
                     >
                       Phone
                     </Button>
@@ -390,14 +394,17 @@ const Auth = () => {
                         {resetEmailSent ? (
                           <div className="text-center space-y-4">
                             <p className="text-sm text-muted-foreground">
-                              We've sent a password reset link to <strong>{email}</strong>. 
-                              Please check your email and click the link to reset your password.
+                              We've sent a password reset link to <strong>{email}</strong>. Please check your email and
+                              click the link to reset your password.
                             </p>
                             <Button
                               type="button"
                               variant="ghost"
                               className="w-full"
-                              onClick={() => { setForgotPassword(false); setResetEmailSent(false); }}
+                              onClick={() => {
+                                setForgotPassword(false);
+                                setResetEmailSent(false);
+                              }}
                             >
                               Back to Login
                             </Button>
@@ -502,12 +509,7 @@ const Auth = () => {
                         {loading ? "Processing..." : otpSent ? "Verify Code" : "Send Code"}
                       </Button>
                       {otpSent && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          className="w-full text-sm"
-                          onClick={resetPhoneAuth}
-                        >
+                        <Button type="button" variant="ghost" className="w-full text-sm" onClick={resetPhoneAuth}>
                           Change phone number
                         </Button>
                       )}
@@ -551,9 +553,7 @@ const Auth = () => {
                       <span className="w-full border-t" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or continue with
-                      </span>
+                      <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                     </div>
                   </div>
 
@@ -563,7 +563,10 @@ const Auth = () => {
                       variant={authMethod === "email" ? "default" : "outline"}
                       size="sm"
                       className="flex-1"
-                      onClick={() => { setAuthMethod("email"); resetPhoneAuth(); }}
+                      onClick={() => {
+                        setAuthMethod("email");
+                        resetPhoneAuth();
+                      }}
                     >
                       Email
                     </Button>
@@ -572,7 +575,10 @@ const Auth = () => {
                       variant={authMethod === "phone" ? "default" : "outline"}
                       size="sm"
                       className="flex-1"
-                      onClick={() => { setAuthMethod("phone"); resetPhoneAuth(); }}
+                      onClick={() => {
+                        setAuthMethod("phone");
+                        resetPhoneAuth();
+                      }}
                     >
                       Phone
                     </Button>
@@ -685,15 +691,16 @@ const Auth = () => {
                       />
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Creating account..." : authMethod === "phone" && otpSent ? "Verify & Create Account" : authMethod === "phone" ? "Send Code" : "Create Account"}
+                      {loading
+                        ? "Creating account..."
+                        : authMethod === "phone" && otpSent
+                          ? "Verify & Create Account"
+                          : authMethod === "phone"
+                            ? "Send Code"
+                            : "Create Account"}
                     </Button>
                     {authMethod === "phone" && otpSent && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        className="w-full text-sm"
-                        onClick={resetPhoneAuth}
-                      >
+                      <Button type="button" variant="ghost" className="w-full text-sm" onClick={resetPhoneAuth}>
                         Change phone number
                       </Button>
                     )}
