@@ -93,7 +93,7 @@ const Auth = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/#/`,
+          redirectTo: `${window.location.origin}/`,
         },
       });
 
@@ -179,7 +179,7 @@ const Auth = () => {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/#/`,
+            emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
               phone: phone,
@@ -278,7 +278,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
