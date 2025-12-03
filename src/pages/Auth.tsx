@@ -26,6 +26,25 @@ const Auth = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+
+  useEffect(() => {
+    // Handle incoming recovery tokens in Auth page
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+
+    if (params.get("type") === "recovery") {
+      // This is a password reset link
+      console.log("Recovery token detected in Auth page");
+      // Store the email if available
+      const storedEmail = localStorage.getItem("reset_email");
+      if (storedEmail) {
+        setEmail(storedEmail);
+      }
+      // Navigate to reset password
+      navigate("/reset-password");
+    }
+  }, [navigate]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
