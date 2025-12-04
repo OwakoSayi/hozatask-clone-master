@@ -523,29 +523,22 @@ const BookingForm = () => {
                   </Button>
                 </div>
 
-                {/* PayPal Payment */}
+                {/* Confirm Booking with Payment */}
                 <div className="space-y-4">
-                  <p className="text-sm font-medium text-center">Please pay the booking fee to proceed</p>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => window.open('https://www.paypal.com/ncp/payment/FLZUSK3CP4U4E', '_blank')}
-                  >
-                    Pay R50 Booking Fee via PayPal
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    After completing payment, click the button below to confirm your booking
+                  <p className="text-sm text-center text-muted-foreground">
+                    Clicking below will open PayPal to complete your R50 booking fee payment
                   </p>
                   <Button 
                     type="button" 
-                    onClick={handleSubmit} 
+                    onClick={() => {
+                      window.open('https://www.paypal.com/ncp/payment/FLZUSK3CP4U4E', '_blank');
+                      handleSubmit();
+                    }}
                     disabled={submitting}
                     className="w-full" 
                     size="lg"
                   >
-                    {submitting ? "Processing..." : "Confirm Booking"}
+                    {submitting ? "Processing..." : "Confirm Booking with booking fee"}
                   </Button>
                 </div>
               </CardContent>
