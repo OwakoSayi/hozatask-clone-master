@@ -3,12 +3,22 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Menu, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetClose,
+} from "./ui/sheet";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [user, setUser] = useState<any>(null);
   const [isSupplier, setIsSupplier] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -39,19 +49,6 @@ export const Header = () => {
       .maybeSingle();
     
     setIsSupplier(!!data);
-
-    // If user is logged in but not a supplier, check if they have an unlinkable supplier account
-    if (!data) {
-      const { data: unlinkableSupplier } = await supabase
-        .from("suppliers")
-        .select("id")
-        .is("user_id", null)
-        .eq("status", "Active")
-        .limit(1)
-        .maybeSingle();
-      
-      // Don't auto-navigate, just let them access the link page if needed
-    }
   };
 
   const handleLogout = async () => {
@@ -60,8 +57,46 @@ export const Header = () => {
       title: "Logged out",
       description: "You have been logged out successfully",
     });
+    setIsOpen(false);
     navigate("/");
   };
+
+  const handleNavigate = (path: string) => {
+    setIsOpen(false);
+    navigate(path);
+  };
+
+  const NavItems = () => (
+    <>
+      <Button variant="ghost" onClick={() => handleNavigate("/browse")} className="w-full md:w-auto justify-start md:justify-center">
+        Browse Services
+      </Button>
+      {user && isSupplier && (
+        <Button variant="ghost" onClick={() => handleNavigate("/supplier-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
+          My Dashboard
+        </Button>
+      )}
+      {user && !isSupplier && (
+        <>
+          <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
+            My Account
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => handleNavigate("/supplier-submission")} className="w-full md:w-auto">
+            List a Service
+          </Button>
+        </>
+      )}
+      {user ? (
+        <Button onClick={handleLogout} className="w-full md:w-auto">
+          Logout
+        </Button>
+      ) : (
+        <Button onClick={() => handleNavigate("/auth")} className="w-full md:w-auto">
+          Login
+        </Button>
+      )}
+    </>
+  );
 
   return (
     <header className="border-b border-border bg-background">
@@ -72,35 +107,30 @@ export const Header = () => {
         >
           HozaTask
         </h1>
-        <nav className="flex gap-4 items-center">
-          <Button variant="ghost" onClick={() => navigate("/browse")}>
-            Browse Services
-          </Button>
-          {user && isSupplier && (
-            <Button variant="ghost" onClick={() => navigate("/supplier-dashboard")}>
-              My Dashboard
-            </Button>
-          )}
-          {user && !isSupplier && (
-            <>
-              <Button variant="ghost" onClick={() => navigate("/my-account")}>
-                My Account
+        
+        {/* Desktop Navigation */}
+        {!isMobile && (
+          <nav className="flex gap-4 items-center">
+            <NavItems />
+          </nav>
+        )}
+
+        {/* Mobile Hamburger Menu */}
+        {isMobile && (
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate("/supplier-submission")}>
-                List a Service
-              </Button>
-            </>
-          )}
-          {user ? (
-            <Button onClick={handleLogout}>
-              Logout
-            </Button>
-          ) : (
-            <Button onClick={() => navigate("/auth")}>
-              Login
-            </Button>
-          )}
-        </nav>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[280px] bg-background">
+              <nav className="flex flex-col gap-4 mt-8">
+                <NavItems />
+              </nav>
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </header>
   );
