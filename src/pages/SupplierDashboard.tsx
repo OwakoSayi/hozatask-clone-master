@@ -590,24 +590,24 @@ const SupplierDashboard = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <div className="container mx-auto px-4 py-8 flex-1 max-w-7xl">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 flex-1 max-w-7xl">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16 border-2 border-primary/20">
+        <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Avatar className="h-12 w-12 sm:h-16 sm:w-16 border-2 border-primary/20 flex-shrink-0">
               <AvatarImage src={profileImage} alt={supplier?.business_name} />
-              <AvatarFallback className="text-xl bg-primary/10 text-primary">
+              <AvatarFallback className="text-lg sm:text-xl bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground">{supplier?.contact_name}</h1>
-              <p className="text-muted-foreground">{supplier?.business_name}</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-3xl font-bold text-foreground truncate">{supplier?.contact_name}</h1>
+              <p className="text-sm sm:text-base text-muted-foreground truncate">{supplier?.business_name}</p>
             </div>
           </div>
           <Dialog open={profileDialogOpen} onOpenChange={setProfileDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="lg">
+              <Button variant="outline" size="default" className="w-full sm:w-auto">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Profile
               </Button>
@@ -665,7 +665,7 @@ const SupplierDashboard = () => {
                     required
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="phone">Phone Number</Label>
                     <Input
@@ -722,52 +722,52 @@ const SupplierDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Card className="border-border shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Completed Jobs</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.completed}</p>
+            <CardContent className="p-3 sm:pt-6 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Completed</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">{stats.completed}</p>
                 </div>
-                <CheckCircle className="h-10 w-10 text-accent" />
+                <CheckCircle className="h-6 w-6 sm:h-10 sm:w-10 text-accent flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
           <Card className="border-border shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Pending Bookings</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.pending}</p>
+            <CardContent className="p-3 sm:pt-6 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Pending</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">{stats.pending}</p>
                 </div>
-                <TrendingUp className="h-10 w-10 text-primary" />
+                <TrendingUp className="h-6 w-6 sm:h-10 sm:w-10 text-primary flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
           <Card className="border-border shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Average Rating</p>
-                  <p className="text-3xl font-bold text-foreground">
+            <CardContent className="p-3 sm:pt-6 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Rating</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">
                     {stats.rating > 0 ? stats.rating.toFixed(1) : "N/A"}
                   </p>
                 </div>
-                <Star className="h-10 w-10 text-primary fill-primary" />
+                <Star className="h-6 w-6 sm:h-10 sm:w-10 text-primary fill-primary flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
           <Card className="border-border shadow-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Active Services</p>
-                  <p className="text-3xl font-bold text-foreground">
+            <CardContent className="p-3 sm:pt-6 sm:px-6">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate">Services</p>
+                  <p className="text-xl sm:text-3xl font-bold text-foreground">
                     {serviceOptions.filter(s => s.is_active).length}
                   </p>
                 </div>
-                <DollarSign className="h-10 w-10 text-accent" />
+                <DollarSign className="h-6 w-6 sm:h-10 sm:w-10 text-accent flex-shrink-0" />
               </div>
             </CardContent>
           </Card>
@@ -775,10 +775,10 @@ const SupplierDashboard = () => {
 
         {/* Tabs Section */}
         <Tabs defaultValue="services" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
-            <TabsTrigger value="services">My Services</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6 h-auto">
+            <TabsTrigger value="services" className="text-xs sm:text-sm py-2">Services</TabsTrigger>
+            <TabsTrigger value="bookings" className="text-xs sm:text-sm py-2">Bookings</TabsTrigger>
+            <TabsTrigger value="reviews" className="text-xs sm:text-sm py-2">Reviews</TabsTrigger>
           </TabsList>
 
           {/* Services Tab */}
@@ -979,52 +979,55 @@ const SupplierDashboard = () => {
               </CardHeader>
               <CardContent>
                 {serviceOptions.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <p className="text-muted-foreground mb-4">No services yet</p>
                     <p className="text-sm text-muted-foreground">Add your first service to start receiving bookings</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {serviceOptions.map((service) => (
                       <Card key={service.id} className="border-border">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start gap-4">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                             {service.images && service.images.length > 0 && (
                               <img
                                 src={service.images[0]}
                                 alt={service.title}
-                                className="w-20 h-20 object-cover rounded-lg"
+                                className="w-full sm:w-20 h-32 sm:h-20 object-cover rounded-lg"
                               />
                             )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold text-lg text-foreground">{service.title}</h3>
-                                <Badge variant={service.is_active ? "default" : "secondary"}>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-2">
+                                <h3 className="font-semibold text-base sm:text-lg text-foreground">{service.title}</h3>
+                                <Badge variant={service.is_active ? "default" : "secondary"} className="text-xs">
                                   {service.is_active ? "Active" : "Inactive"}
                                 </Badge>
                                 {service.category && (
-                                  <Badge variant="outline">
+                                  <Badge variant="outline" className="text-xs">
                                     {service.category}
                                   </Badge>
                                 )}
                               </div>
-                              <p className="text-sm text-muted-foreground mb-2">{service.description}</p>
-                              <p className="font-semibold text-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{service.description}</p>
+                              <p className="font-semibold text-sm sm:text-base text-foreground">
                                 R{service.price} {service.time_frame && `/ ${service.time_frame.replace('per ', '')}`}
                               </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap sm:flex-nowrap">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleEdit(service)}
+                                className="flex-1 sm:flex-none"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Edit className="h-4 w-4 sm:mr-0" />
+                                <span className="sm:hidden ml-1">Edit</span>
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleToggleActive(service.id, service.is_active)}
+                                className="flex-1 sm:flex-none text-xs sm:text-sm"
                               >
                                 {service.is_active ? "Deactivate" : "Activate"}
                               </Button>
@@ -1032,8 +1035,10 @@ const SupplierDashboard = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleDelete(service.id)}
+                                className="flex-1 sm:flex-none"
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="h-4 w-4 text-destructive sm:mr-0" />
+                                <span className="sm:hidden ml-1">Delete</span>
                               </Button>
                             </div>
                           </div>
@@ -1061,38 +1066,38 @@ const SupplierDashboard = () => {
                       <p className="text-muted-foreground">No active opportunities</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                       {bookings.filter(b => !b.matched_supplier_id && !declinedBookings.includes(b.id)).map((booking) => (
                         <Card key={booking.id} className="border-primary/20 bg-primary/5">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start gap-4">
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col gap-3">
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <Badge variant="secondary" className="bg-primary/10 text-primary">New Opportunity</Badge>
+                                  <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">New Opportunity</Badge>
                                 </div>
-                                <p className="font-semibold text-foreground">{booking.customer_name}</p>
-                                <p className="text-sm text-muted-foreground">{booking.phone}</p>
-                                <p className="text-sm text-muted-foreground">{booking.email}</p>
-                                <p className="text-sm text-foreground mt-2">
-                                  <span className="font-medium">Event Date:</span> {new Date(booking.event_date).toLocaleDateString()}
+                                <p className="font-semibold text-sm sm:text-base text-foreground">{booking.customer_name}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">{booking.phone}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground break-all">{booking.email}</p>
+                                <p className="text-xs sm:text-sm text-foreground mt-2">
+                                  <span className="font-medium">Date:</span> {new Date(booking.event_date).toLocaleDateString()}
                                 </p>
-                                <p className="text-sm text-foreground">
+                                <p className="text-xs sm:text-sm text-foreground">
                                   <span className="font-medium">Address:</span> {booking.address}
                                 </p>
                                 {booking.event_type && (
-                                  <p className="text-sm text-foreground">
-                                    <span className="font-medium">Event Type:</span> {booking.event_type}
+                                  <p className="text-xs sm:text-sm text-foreground">
+                                    <span className="font-medium">Type:</span> {booking.event_type}
                                   </p>
                                 )}
                                 {booking.notes && (
-                                  <p className="text-sm text-muted-foreground mt-2 italic">"{booking.notes}"</p>
+                                  <p className="text-xs sm:text-sm text-muted-foreground mt-2 italic">"{booking.notes}"</p>
                                 )}
                               </div>
-                              <div className="flex flex-col gap-2">
+                              <div className="flex gap-2">
                                 <Button
                                   onClick={() => handleAcceptBooking(booking.id)}
                                   size="sm"
-                                  className="bg-accent hover:bg-accent/90"
+                                  className="bg-accent hover:bg-accent/90 flex-1 sm:flex-none"
                                 >
                                   <Check className="mr-1 h-4 w-4" />
                                   Accept
@@ -1123,30 +1128,39 @@ const SupplierDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {bookings.filter(b => b.matched_supplier_id === supplier?.id).length === 0 ? (
-                    <div className="text-center py-12">
+                    <div className="text-center py-8 sm:py-12">
                       <p className="text-muted-foreground">No matched bookings yet</p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-3 sm:space-y-4">
                       {bookings.filter(b => b.matched_supplier_id === supplier?.id).map((booking) => (
                         <Card key={booking.id} className="border-border">
-                          <CardContent className="p-4">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-semibold text-foreground">{booking.customer_name}</p>
-                                <p className="text-sm text-muted-foreground">{booking.phone}</p>
-                                <p className="text-sm text-muted-foreground">{booking.email}</p>
-                                <p className="text-sm text-foreground mt-2">
-                                  <span className="font-medium">Event Date:</span> {new Date(booking.event_date).toLocaleDateString()}
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2 mb-1 sm:mb-0">
+                                  <p className="font-semibold text-sm sm:text-base text-foreground">{booking.customer_name}</p>
+                                  <Badge className="sm:hidden" variant={
+                                    booking.status === "Completed" ? "default" :
+                                    booking.status === "Confirmed" ? "default" :
+                                    booking.status === "New" ? "secondary" : "outline"
+                                  }>
+                                    {booking.status}
+                                  </Badge>
+                                </div>
+                                <p className="text-xs sm:text-sm text-muted-foreground">{booking.phone}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground break-all">{booking.email}</p>
+                                <p className="text-xs sm:text-sm text-foreground mt-2">
+                                  <span className="font-medium">Date:</span> {new Date(booking.event_date).toLocaleDateString()}
                                 </p>
-                                <p className="text-sm text-foreground">
+                                <p className="text-xs sm:text-sm text-foreground">
                                   <span className="font-medium">Address:</span> {booking.address}
                                 </p>
                                 {booking.notes && (
-                                  <p className="text-sm text-muted-foreground mt-2">{booking.notes}</p>
+                                  <p className="text-xs sm:text-sm text-muted-foreground mt-2">{booking.notes}</p>
                                 )}
                               </div>
-                              <Badge variant={
+                              <Badge className="hidden sm:inline-flex" variant={
                                 booking.status === "Completed" ? "default" :
                                 booking.status === "Confirmed" ? "default" :
                                 booking.status === "New" ? "secondary" : "outline"
@@ -1171,30 +1185,30 @@ const SupplierDashboard = () => {
                 <CardTitle>Customer Reviews</CardTitle>
                 <CardDescription>See what your clients say</CardDescription>
               </CardHeader>
-              <CardContent>
+                <CardContent>
                 {reviews.length === 0 ? (
-                  <div className="text-center py-12">
+                  <div className="text-center py-8 sm:py-12">
                     <p className="text-muted-foreground">No reviews yet</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {reviews.map((review) => (
                       <Card key={review.id} className="border-border">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarFallback className="bg-primary/10 text-primary">
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-start gap-2 sm:gap-3">
+                            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs sm:text-sm">
                                 {review.customer_name.substring(0, 2).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-2">
-                                <p className="font-semibold text-foreground">{review.customer_name}</p>
-                                <div className="flex items-center gap-1">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+                                <p className="font-semibold text-sm sm:text-base text-foreground truncate">{review.customer_name}</p>
+                                <div className="flex items-center gap-0.5">
                                   {Array.from({ length: 5 }).map((_, i) => (
                                     <Star
                                       key={i}
-                                      className={`h-4 w-4 ${
+                                      className={`h-3 w-3 sm:h-4 sm:w-4 ${
                                         i < review.rating
                                           ? "fill-primary text-primary"
                                           : "text-muted-foreground/30"
@@ -1203,11 +1217,11 @@ const SupplierDashboard = () => {
                                   ))}
                                 </div>
                               </div>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs sm:text-sm text-muted-foreground">
                                 {new Date(review.created_at).toLocaleDateString()}
                               </p>
                               {review.comment && (
-                                <p className="text-foreground mt-2">{review.comment}</p>
+                                <p className="text-xs sm:text-sm text-foreground mt-2">{review.comment}</p>
                               )}
                             </div>
                           </div>
