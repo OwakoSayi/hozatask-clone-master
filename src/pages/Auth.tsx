@@ -105,12 +105,27 @@ const Auth = () => {
   };
 
 
+  const validatePhoneE164 = (phoneNumber: string): boolean => {
+    const e164Regex = /^\+[1-9]\d{6,14}$/;
+    return e164Regex.test(phoneNumber);
+  };
+
   const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       if (!otpSent) {
+        if (!validatePhoneE164(phone)) {
+          toast({
+            title: "Invalid Phone Number",
+            description: "Please enter a valid phone number with country code (e.g., +27123456789)",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const { error } = await supabase.auth.signInWithOtp({
           phone: phone,
         });
@@ -201,11 +216,32 @@ const Auth = () => {
         }
       } else {
         if (!otpSent) {
+          if (!validatePhoneE164(phone)) {
+            toast({
+              title: "Invalid Phone Number",
+              description: "Please enter a valid phone number with country code (e.g., +27123456789)",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+
+          if (!fullName.trim()) {
+            toast({
+              title: "Name Required",
+              description: "Please enter your full name to sign up.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+
           const { error } = await supabase.auth.signInWithOtp({
             phone: phone,
             options: {
               data: {
                 full_name: fullName,
+                phone: phone,
                 address: address,
                 city: city,
               },
