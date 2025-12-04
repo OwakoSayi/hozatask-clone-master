@@ -6,9 +6,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+
+const PROVINCES = [
+  "Eastern Cape",
+  "Free State",
+  "Gauteng",
+  "KwaZulu-Natal",
+  "Limpopo",
+  "Mpumalanga",
+  "Northern Cape",
+  "North West",
+  "Western Cape",
+];
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -21,6 +34,7 @@ const Auth = () => {
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
 
   useEffect(() => {
     const hash = window.location.hash.substring(1);
@@ -111,6 +125,7 @@ const Auth = () => {
             phone: phone,
             address: address,
             city: city,
+            province: province,
           },
         },
       });
@@ -262,7 +277,22 @@ const Auth = () => {
                       required
                     />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-province">Province</Label>
+                    <Select value={province} onValueChange={setProvince} required>
+                      <SelectTrigger id="signup-province" className="bg-background">
+                        <SelectValue placeholder="Select a province" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {PROVINCES.map((prov) => (
+                          <SelectItem key={prov} value={prov}>
+                            {prov}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading || !province}>
                     {loading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
