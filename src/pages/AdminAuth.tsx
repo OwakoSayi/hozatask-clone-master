@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
+const AUTHORIZED_ADMIN_EMAIL = "peacesayiiv@gmail.com";
+
 const AdminAuth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -17,6 +19,17 @@ const AdminAuth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Check if email is the authorized admin email
+    if (email.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+      toast({
+        title: "Access Denied",
+        description: "You are not authorized to access the admin panel.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -30,7 +43,13 @@ const AdminAuth = () => {
         throw new Error("Login failed");
       }
 
-      // Check if user is admin
+      // Verify again that the logged in user is the authorized admin
+      if (data.user.email?.toLowerCase() !== AUTHORIZED_ADMIN_EMAIL.toLowerCase()) {
+        await supabase.auth.signOut();
+        throw new Error("Access denied. You are not authorized.");
+      }
+
+      // Check if user is in admin_users table
       const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
         .select("*")

@@ -17,7 +17,6 @@ import SupplierDashboard from "./pages/SupplierDashboard";
 
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminSetup from "./pages/AdminSetup";
 import CustomerAccount from "./pages/CustomerAccount";
 
 import NotFound from "./pages/NotFound";
@@ -43,7 +42,6 @@ const App = () => (
           <Route path="/supplier/:id" element={<SupplierProfile />} />
           <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
           
-          <Route path="/admin/setup" element={<AdminSetup />} />
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/my-account" element={<CustomerAccount />} />
