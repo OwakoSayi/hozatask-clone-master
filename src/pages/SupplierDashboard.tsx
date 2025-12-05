@@ -28,6 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import { CategoryCombobox } from "@/components/CategoryCombobox";
 
 interface Supplier {
   id: string;
@@ -866,46 +867,11 @@ const SupplierDashboard = () => {
                         </div>
                         <div>
                           <Label htmlFor="category">Service Category</Label>
-                          <Select 
-                            value={formData.category} 
+                          <CategoryCombobox
+                            value={formData.category}
                             onValueChange={(value) => setFormData({ ...formData, category: value })}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
-                              <SelectItem value="Cleaning">Cleaning</SelectItem>
-                              <SelectItem value="Handyman">Handyman</SelectItem>
-                              <SelectItem value="Plumbing">Plumbing</SelectItem>
-                              <SelectItem value="Electrical">Electrical</SelectItem>
-                              <SelectItem value="Painting">Painting</SelectItem>
-                              <SelectItem value="Gardening & Landscaping">Gardening & Landscaping</SelectItem>
-                              <SelectItem value="Moving & Transportation">Moving & Transportation</SelectItem>
-                              <SelectItem value="Assembly & Installation">Assembly & Installation</SelectItem>
-                              <SelectItem value="Carpentry">Carpentry</SelectItem>
-                              <SelectItem value="Roofing">Roofing</SelectItem>
-                              <SelectItem value="HVAC">HVAC (Heating & Cooling)</SelectItem>
-                              <SelectItem value="Pest Control">Pest Control</SelectItem>
-                              <SelectItem value="Security & Alarm Systems">Security & Alarm Systems</SelectItem>
-                              <SelectItem value="Interior Design">Interior Design</SelectItem>
-                              <SelectItem value="Catering & Food Services">Catering & Food Services</SelectItem>
-                              <SelectItem value="Photography & Videography">Photography & Videography</SelectItem>
-                              <SelectItem value="Event Planning">Event Planning</SelectItem>
-                              <SelectItem value="IT & Computer Services">IT & Computer Services</SelectItem>
-                              <SelectItem value="Tutoring & Education">Tutoring & Education</SelectItem>
-                              <SelectItem value="Pet Care & Grooming">Pet Care & Grooming</SelectItem>
-                              <SelectItem value="Beauty & Personal Care">Beauty & Personal Care</SelectItem>
-                              <SelectItem value="Fitness & Training">Fitness & Training</SelectItem>
-                              <SelectItem value="Auto Repair & Maintenance">Auto Repair & Maintenance</SelectItem>
-                              <SelectItem value="Locksmith">Locksmith</SelectItem>
-                              <SelectItem value="Pool Maintenance">Pool Maintenance</SelectItem>
-                              <SelectItem value="Tiling">Tiling</SelectItem>
-                              <SelectItem value="Welding & Metalwork">Welding & Metalwork</SelectItem>
-                              <SelectItem value="Upholstery">Upholstery</SelectItem>
-                              <SelectItem value="Delivery Services">Delivery Services</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
+                            placeholder="Search or select a category..."
+                          />
                         </div>
                         <div>
                           <Label htmlFor="location_area">Service Area</Label>
