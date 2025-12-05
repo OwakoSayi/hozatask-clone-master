@@ -71,20 +71,20 @@ export const Header = () => {
       <Button variant="ghost" onClick={() => handleNavigate("/browse")} className="w-full md:w-auto justify-start md:justify-center">
         Browse Services
       </Button>
+      {!isSupplier && (
+        <Button variant="outline" size="sm" onClick={() => handleNavigate("/supplier-submission")} className="w-full md:w-auto">
+          List Your Service
+        </Button>
+      )}
       {user && isSupplier && (
         <Button variant="ghost" onClick={() => handleNavigate("/supplier-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
           My Dashboard
         </Button>
       )}
       {user && !isSupplier && (
-        <>
-          <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
-            My Account
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleNavigate("/supplier-submission")} className="w-full md:w-auto">
-            List a Service
-          </Button>
-        </>
+        <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
+          My Account
+        </Button>
       )}
       {user ? (
         <Button onClick={handleLogout} className="w-full md:w-auto">
