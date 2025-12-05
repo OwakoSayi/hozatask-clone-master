@@ -11,7 +11,10 @@ import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
-import { CATEGORY_NAMES } from "@/config/categories";
+import { CategoryCombobox } from "@/components/CategoryCombobox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+type ListingType = "service" | "event" | "hire";
 
 const SupplierSubmission = () => {
   const navigate = useNavigate();
@@ -19,18 +22,25 @@ const SupplierSubmission = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [listingType, setListingType] = useState<ListingType>("service");
 
   const [formData, setFormData] = useState({
     business_name: "",
-    contact_name: "",
-    phone: "",
     whatsapp: "",
     location: "",
     category: "",
     title: "",
     price: "",
+    time_frame: "per service",
     description: "",
+    // Event-specific fields
+    event_duration: "",
+    setup_time: "",
+    // Hire-specific fields
+    rental_period: "",
+    deposit_required: "",
   });
 
   const [images, setImages] = useState<string[]>([]);
@@ -49,6 +59,22 @@ const SupplierSubmission = () => {
     }
 
     setUser(session.user);
+
+    // Fetch user profile to get their existing info
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (profile) {
+      setUserProfile(profile);
+      // Pre-fill location from profile city
+      setFormData(prev => ({
+        ...prev,
+        location: profile.city || "",
+      }));
+    }
 
     // Check if user already has a supplier account
     const { data: existingSupplier } = await supabase
@@ -148,7 +174,7 @@ const SupplierSubmission = () => {
   const canProceed = () => {
     switch (currentStep) {
       case 1:
-        return formData.business_name && formData.contact_name && formData.phone;
+        return formData.business_name && listingType;
       case 2:
         return formData.category && formData.title && formData.location;
       case 3:
@@ -162,21 +188,28 @@ const SupplierSubmission = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user || !userProfile) return;
 
     setSubmitting(true);
 
     try {
+      // Build time_frame based on listing type
+      let timeFrame = formData.time_frame;
+      if (listingType === "hire" && formData.rental_period) {
+        timeFrame = `per ${formData.rental_period}`;
+      }
+
       const { error } = await supabase.from("suppliers").insert({
         user_id: user.id,
         business_name: formData.business_name,
-        contact_name: formData.contact_name,
-        phone: formData.phone,
-        whatsapp: formData.whatsapp,
+        contact_name: userProfile.full_name, // From profile
+        phone: userProfile.phone, // From profile
+        whatsapp: formData.whatsapp || userProfile.phone,
         location: formData.location,
         category: formData.category,
         title: formData.title,
         price: parseFloat(formData.price),
+        time_frame: timeFrame,
         description: formData.description,
         images: images.length > 0 ? images : null,
         status: "Pending",
@@ -185,8 +218,8 @@ const SupplierSubmission = () => {
       if (error) throw error;
 
       toast({
-        title: "Service Listed!",
-        description: "Your listing is under review. We'll notify you once it's approved and your supplier account is activated.",
+        title: "Listing Submitted!",
+        description: "Your listing is under review. We'll notify you once it's approved.",
       });
 
       navigate("/my-account");
@@ -202,6 +235,15 @@ const SupplierSubmission = () => {
     }
   };
 
+  const getListingTypeLabel = () => {
+    switch (listingType) {
+      case "service": return "Service";
+      case "event": return "Event Service";
+      case "hire": return "Item for Hire";
+      default: return "Listing";
+    }
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -209,53 +251,77 @@ const SupplierSubmission = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold mb-4">Business Information</h3>
+              {userProfile && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Listing as: <span className="font-medium text-foreground">{userProfile.full_name}</span> • {userProfile.phone}
+                </p>
+              )}
             </div>
+            
+            <div>
+              <Label className="text-base font-medium mb-3 block">What type of listing is this? *</Label>
+              <RadioGroup
+                value={listingType}
+                onValueChange={(value) => setListingType(value as ListingType)}
+                className="grid grid-cols-1 gap-3"
+              >
+                <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="service" id="service" className="mt-1" />
+                  <Label htmlFor="service" className="cursor-pointer flex-1">
+                    <span className="font-medium">Service</span>
+                    <p className="text-sm text-muted-foreground">
+                      Ongoing services like cleaning, repairs, tutoring, etc.
+                    </p>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="event" id="event" className="mt-1" />
+                  <Label htmlFor="event" className="cursor-pointer flex-1">
+                    <span className="font-medium">Event Service</span>
+                    <p className="text-sm text-muted-foreground">
+                      Services for events like DJs, catering, photography, décor, etc.
+                    </p>
+                  </Label>
+                </div>
+                <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-muted/50 cursor-pointer">
+                  <RadioGroupItem value="hire" id="hire" className="mt-1" />
+                  <Label htmlFor="hire" className="cursor-pointer flex-1">
+                    <span className="font-medium">Item for Hire</span>
+                    <p className="text-sm text-muted-foreground">
+                      Equipment or items for rent like jumping castles, tents, tools, etc.
+                    </p>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+
             <div>
               <Label htmlFor="business_name">Business Name *</Label>
               <Input
                 id="business_name"
                 required
+                placeholder="Your business or trading name"
                 value={formData.business_name}
                 onChange={(e) =>
                   setFormData({ ...formData, business_name: e.target.value })
                 }
               />
             </div>
+            
             <div>
-              <Label htmlFor="contact_name">Contact Person *</Label>
+              <Label htmlFor="whatsapp">WhatsApp Number (optional)</Label>
               <Input
-                id="contact_name"
-                required
-                value={formData.contact_name}
+                id="whatsapp"
+                type="tel"
+                placeholder="Leave blank to use your registered phone"
+                value={formData.whatsapp}
                 onChange={(e) =>
-                  setFormData({ ...formData, contact_name: e.target.value })
+                  setFormData({ ...formData, whatsapp: e.target.value })
                 }
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="phone">Phone Number *</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="whatsapp">WhatsApp Number</Label>
-                <Input
-                  id="whatsapp"
-                  type="tel"
-                  value={formData.whatsapp}
-                  onChange={(e) =>
-                    setFormData({ ...formData, whatsapp: e.target.value })
-                  }
-                />
-              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                If different from your registered number
+              </p>
             </div>
           </div>
         );
@@ -264,33 +330,30 @@ const SupplierSubmission = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Service Details</h3>
+              <h3 className="text-lg font-semibold mb-4">{getListingTypeLabel()} Details</h3>
             </div>
             <div>
-              <Label htmlFor="category">Service Category *</Label>
-              <select
-                id="category"
-                required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground"
+              <Label htmlFor="category">Category *</Label>
+              <CategoryCombobox
                 value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-              >
-                <option value="">Select a category</option>
-                {CATEGORY_NAMES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                placeholder="Search or select a category..."
+              />
             </div>
             <div>
-              <Label htmlFor="title">Service Title *</Label>
+              <Label htmlFor="title">
+                {listingType === "hire" ? "Item Name" : "Service Title"} *
+              </Label>
               <Input
                 id="title"
                 required
-                placeholder="e.g., Premium Jumping Castle Rental"
+                placeholder={
+                  listingType === "hire" 
+                    ? "e.g., Large Jumping Castle, Party Tent 6x6m"
+                    : listingType === "event"
+                    ? "e.g., Wedding DJ Services, Corporate Catering"
+                    : "e.g., Professional House Cleaning, Plumbing Repairs"
+                }
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
@@ -309,6 +372,55 @@ const SupplierSubmission = () => {
                 }
               />
             </div>
+
+            {/* Event-specific fields */}
+            {listingType === "event" && (
+              <>
+                <div>
+                  <Label htmlFor="event_duration">Typical Duration</Label>
+                  <Input
+                    id="event_duration"
+                    placeholder="e.g., 4-6 hours, Full day"
+                    value={formData.event_duration}
+                    onChange={(e) =>
+                      setFormData({ ...formData, event_duration: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="setup_time">Setup Time Required</Label>
+                  <Input
+                    id="setup_time"
+                    placeholder="e.g., 1 hour before event"
+                    value={formData.setup_time}
+                    onChange={(e) =>
+                      setFormData({ ...formData, setup_time: e.target.value })
+                    }
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Hire-specific fields */}
+            {listingType === "hire" && (
+              <div>
+                <Label htmlFor="rental_period">Rental Period</Label>
+                <select
+                  id="rental_period"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground"
+                  value={formData.rental_period}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rental_period: e.target.value })
+                  }
+                >
+                  <option value="">Select rental period</option>
+                  <option value="hour">Per Hour</option>
+                  <option value="day">Per Day</option>
+                  <option value="weekend">Per Weekend</option>
+                  <option value="week">Per Week</option>
+                </select>
+              </div>
+            )}
           </div>
         );
 
@@ -319,7 +431,9 @@ const SupplierSubmission = () => {
               <h3 className="text-lg font-semibold mb-4">Pricing</h3>
             </div>
             <div>
-              <Label htmlFor="price">Your Price (R) *</Label>
+              <Label htmlFor="price">
+                {listingType === "hire" ? "Rental Price" : "Your Price"} (R) *
+              </Label>
               <Input
                 id="price"
                 type="number"
@@ -328,9 +442,51 @@ const SupplierSubmission = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, price: e.target.value })
                 }
-                placeholder="e.g., 500"
+                placeholder={listingType === "hire" ? "e.g., 800" : "e.g., 500"}
               />
+              {listingType === "hire" && formData.rental_period && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  Price per {formData.rental_period}
+                </p>
+              )}
             </div>
+
+            {listingType === "hire" && (
+              <div>
+                <Label htmlFor="deposit_required">Deposit Required (R)</Label>
+                <Input
+                  id="deposit_required"
+                  type="number"
+                  placeholder="e.g., 500"
+                  value={formData.deposit_required}
+                  onChange={(e) =>
+                    setFormData({ ...formData, deposit_required: e.target.value })
+                  }
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Optional: Refundable deposit for item security
+                </p>
+              </div>
+            )}
+
+            {listingType === "service" && (
+              <div>
+                <Label htmlFor="time_frame">Pricing Basis</Label>
+                <select
+                  id="time_frame"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground"
+                  value={formData.time_frame}
+                  onChange={(e) =>
+                    setFormData({ ...formData, time_frame: e.target.value })
+                  }
+                >
+                  <option value="per service">Per Service</option>
+                  <option value="per hour">Per Hour</option>
+                  <option value="per day">Per Day</option>
+                  <option value="per session">Per Session</option>
+                </select>
+              </div>
+            )}
           </div>
         );
 
@@ -346,7 +502,13 @@ const SupplierSubmission = () => {
                 id="description"
                 required
                 rows={4}
-                placeholder="Describe your service, what makes it special, and what's included..."
+                placeholder={
+                  listingType === "hire"
+                    ? "Describe your item, condition, what's included, delivery options..."
+                    : listingType === "event"
+                    ? "Describe your service, packages available, what's included, experience..."
+                    : "Describe your service, what makes it special, and what's included..."
+                }
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
@@ -354,7 +516,7 @@ const SupplierSubmission = () => {
               />
             </div>
             <div>
-              <Label>Service Images (Up to 10)</Label>
+              <Label>Images (Up to 10)</Label>
               <div className="mt-2">
                 <label
                   htmlFor="image-upload"
@@ -435,7 +597,7 @@ const SupplierSubmission = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">List Your Service</CardTitle>
+            <CardTitle className="text-2xl">List Your {getListingTypeLabel()}</CardTitle>
             <p className="text-muted-foreground">
               Step {currentStep} of {totalSteps}
             </p>

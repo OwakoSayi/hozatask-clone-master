@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { ChevronRight } from "lucide-react";
 import { getGroupedCategories, CATEGORY_GROUPS } from "@/config/categories";
+import { CategoryCombobox } from "@/components/CategoryCombobox";
 interface ServiceOption {
   id: string;
   title: string;
@@ -297,7 +298,16 @@ const BrowseServices = () => {
           </p>
 
           {/* Filters */}
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
+          <div className="grid md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Search Category</label>
+              <CategoryCombobox
+                value={categoryFilter === "all" ? "" : categoryFilter}
+                onValueChange={(value) => handleCategoryChange(value || "all")}
+                placeholder="Type to search..."
+              />
+            </div>
+
             <div>
               <label className="text-sm font-medium mb-2 block">Category Group</label>
               <Select value={selectedGroup} onValueChange={setSelectedGroup}>
