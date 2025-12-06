@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { Star, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Clock, Award } from "lucide-react";
+import { Star, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Clock, Award, Share2, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SupplierProfile {
@@ -44,6 +44,61 @@ interface Review {
   comment: string;
   created_at: string;
 }
+
+const ShareProfileButton = ({ supplierId, businessName }: { supplierId: string; businessName: string }) => {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  
+  const profileUrl = `${window.location.origin}/supplier/${supplierId}`;
+  const shareText = `Book my services on TaskConnect: ${businessName}`;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${businessName} - TaskConnect`,
+          text: shareText,
+          url: profileUrl,
+        });
+        toast({
+          title: "Shared successfully!",
+          description: "Thanks for spreading the word",
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          handleCopy();
+        }
+      }
+    } else {
+      handleCopy();
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(`${shareText}\n${profileUrl}`);
+      setCopied(true);
+      toast({
+        title: "Link copied!",
+        description: "Profile link copied to clipboard",
+      });
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      toast({
+        title: "Failed to copy",
+        description: "Please copy the URL manually",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <Button variant="outline" onClick={handleShare} className="gap-2">
+      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+      Share Profile
+    </Button>
+  );
+};
 
 const SupplierProfile = () => {
   const { id } = useParams();
@@ -162,14 +217,16 @@ const SupplierProfile = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-6 flex-1 max-w-6xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <ShareProfileButton supplierId={id!} businessName={supplier?.business_name || ''} />
+        </div>
 
         {/* Hero Section - TaskRabbit Style */}
         <Card className="mb-6 border-border shadow-md">
