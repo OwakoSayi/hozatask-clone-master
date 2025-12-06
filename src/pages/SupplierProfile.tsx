@@ -10,7 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
-import { Star, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Clock, Award, Share2, Copy, Check } from "lucide-react";
+import {
+  Star,
+  MapPin,
+  Phone,
+  MessageCircle,
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  Award,
+  Share2,
+  Copy,
+  Check,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SupplierProfile {
@@ -49,9 +61,9 @@ interface Review {
 const ShareProfileButton = ({ supplierId, businessName }: { supplierId: string; businessName: string }) => {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  
+
   const profileUrl = `${window.location.origin}/supplier/${supplierId}`;
-  const shareText = `Book my services on TaskConnect: ${businessName}`;
+  const shareText = `Book my services on HozaTask: ${businessName}`;
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -66,7 +78,7 @@ const ShareProfileButton = ({ supplierId, businessName }: { supplierId: string; 
           description: "Thanks for spreading the word",
         });
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
+        if ((err as Error).name !== "AbortError") {
           handleCopy();
         }
       }
@@ -154,10 +166,10 @@ const SupplierProfile = () => {
 
       const { count } = await supabase
         .from("bookings")
-        .select("*", { count: 'exact', head: true })
+        .select("*", { count: "exact", head: true })
         .eq("matched_supplier_id", id)
         .eq("status", "Completed");
-      
+
       setCompletedJobs(count || 0);
     } catch (error) {
       console.error("Error loading supplier data:", error);
@@ -172,8 +184,10 @@ const SupplierProfile = () => {
   };
 
   const handleServiceSelect = async (serviceId: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session) {
       toast({
         title: "Authentication Required",
@@ -217,17 +231,14 @@ const SupplierProfile = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-6 flex-1 max-w-6xl">
         <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(-1)}
-          >
+          <Button variant="ghost" onClick={() => navigate(-1)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
-          <ShareProfileButton supplierId={id!} businessName={supplier?.business_name || ''} />
+          <ShareProfileButton supplierId={id!} businessName={supplier?.business_name || ""} />
         </div>
 
         {/* Hero Section - TaskRabbit Style */}
@@ -238,11 +249,9 @@ const SupplierProfile = () => {
               <div className="flex flex-col items-center md:items-start">
                 <Avatar className="h-32 w-32 border-4 border-primary/10">
                   <AvatarImage src={profileImage} alt={supplier.business_name} />
-                  <AvatarFallback className="text-3xl bg-primary/10 text-primary">
-                    {initials}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-3xl bg-primary/10 text-primary">{initials}</AvatarFallback>
                 </Avatar>
-                
+
                 {/* Stats Cards */}
                 <div className="mt-6 space-y-2 w-full">
                   <div className="flex items-center gap-2 text-sm">
@@ -251,7 +260,9 @@ const SupplierProfile = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <Award className="h-4 w-4 text-accent" />
-                    <span className="font-medium">{serviceOptions.length} active listing{serviceOptions.length !== 1 ? 's' : ''}</span>
+                    <span className="font-medium">
+                      {serviceOptions.length} active listing{serviceOptions.length !== 1 ? "s" : ""}
+                    </span>
                   </div>
                   {reviews.length > 0 && (
                     <div className="flex items-center gap-2 text-sm">
@@ -263,13 +274,15 @@ const SupplierProfile = () => {
                               i < Math.floor(averageRating)
                                 ? "fill-accent text-accent"
                                 : i < averageRating
-                                ? "fill-accent/50 text-accent"
-                                : "text-muted-foreground/30"
+                                  ? "fill-accent/50 text-accent"
+                                  : "text-muted-foreground/30"
                             }`}
                           />
                         ))}
                       </div>
-                      <span className="font-medium">{averageRating.toFixed(1)} stars ({reviews.length} reviews)</span>
+                      <span className="font-medium">
+                        {averageRating.toFixed(1)} stars ({reviews.length} reviews)
+                      </span>
                     </div>
                   )}
                   <div className="flex items-center gap-2 text-sm">
@@ -283,9 +296,7 @@ const SupplierProfile = () => {
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-1">
-                      {supplier.contact_name}
-                    </h1>
+                    <h1 className="text-3xl font-bold text-foreground mb-1">{supplier.contact_name}</h1>
                     <p className="text-lg text-muted-foreground">{supplier.business_name}</p>
                   </div>
                   {reviews.length > 0 && (
@@ -298,18 +309,16 @@ const SupplierProfile = () => {
                               i < Math.floor(averageRating)
                                 ? "fill-primary text-primary"
                                 : i < averageRating
-                                ? "fill-primary/50 text-primary"
-                                : "text-muted-foreground/30"
+                                  ? "fill-primary/50 text-primary"
+                                  : "text-muted-foreground/30"
                             }`}
                           />
                         ))}
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-xl font-bold text-foreground">
-                          {averageRating.toFixed(1)}
-                        </span>
+                        <span className="text-xl font-bold text-foreground">{averageRating.toFixed(1)}</span>
                         <span className="text-xs text-muted-foreground">
-                          {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+                          {reviews.length} review{reviews.length !== 1 ? "s" : ""}
                         </span>
                       </div>
                     </div>
@@ -345,7 +354,7 @@ const SupplierProfile = () => {
                     {serviceOptions.length > 0 && (
                       <Badge variant="outline" className="text-sm px-3 py-1.5">
                         <Award className="h-3 w-3 mr-1.5" />
-                        {serviceOptions.length} Service{serviceOptions.length !== 1 ? 's' : ''} Available
+                        {serviceOptions.length} Service{serviceOptions.length !== 1 ? "s" : ""} Available
                       </Badge>
                     )}
                   </div>
@@ -360,15 +369,17 @@ const SupplierProfile = () => {
                   <div className="bg-muted/30 p-4 rounded-lg">
                     <p className="text-sm text-muted-foreground mb-1">Typical pricing</p>
                     <p className="text-2xl font-bold text-foreground">
-                      R{supplier.price} {supplier.time_frame && `/ ${supplier.time_frame.replace('per ', '')}`}
+                      R{supplier.price} {supplier.time_frame && `/ ${supplier.time_frame.replace("per ", "")}`}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4">
                   <Button
                     onClick={async () => {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      
+                      const {
+                        data: { session },
+                      } = await supabase.auth.getSession();
+
                       if (!session) {
                         toast({
                           title: "Authentication Required",
@@ -413,11 +424,7 @@ const SupplierProfile = () => {
                         <CarouselContent>
                           {option.images.map((img, idx) => (
                             <CarouselItem key={idx}>
-                              <img
-                                src={img}
-                                alt={`${option.title} ${idx + 1}`}
-                                className="w-full h-80 object-cover"
-                              />
+                              <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-80 object-cover" />
                             </CarouselItem>
                           ))}
                         </CarouselContent>
@@ -436,7 +443,7 @@ const SupplierProfile = () => {
                         R{option.price}
                         {option.time_frame && (
                           <span className="text-sm font-normal text-muted-foreground ml-1">
-                            / {option.time_frame.replace('per ', '')}
+                            / {option.time_frame.replace("per ", "")}
                           </span>
                         )}
                       </p>
@@ -449,9 +456,7 @@ const SupplierProfile = () => {
                       )}
                     </div>
                     {option.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {option.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{option.description}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -466,7 +471,7 @@ const SupplierProfile = () => {
                     <DialogHeader>
                       <DialogTitle className="text-xl">{selectedService.title}</DialogTitle>
                     </DialogHeader>
-                    
+
                     {selectedService.images && selectedService.images.length > 0 && (
                       <div className="relative">
                         <Carousel className="w-full">
@@ -499,7 +504,7 @@ const SupplierProfile = () => {
                           R{selectedService.price}
                           {selectedService.time_frame && (
                             <span className="text-base font-normal text-muted-foreground ml-1">
-                              / {selectedService.time_frame.replace('per ', '')}
+                              / {selectedService.time_frame.replace("per ", "")}
                             </span>
                           )}
                         </p>
@@ -519,8 +524,8 @@ const SupplierProfile = () => {
                         </div>
                       )}
 
-                      <Button 
-                        className="w-full" 
+                      <Button
+                        className="w-full"
                         size="lg"
                         onClick={() => {
                           handleServiceSelect(selectedService.id);
@@ -540,9 +545,7 @@ const SupplierProfile = () => {
         {/* Reviews Section */}
         <Card className="border-border shadow-sm">
           <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">
-              Reviews ({reviews.length})
-            </h2>
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Reviews ({reviews.length})</h2>
             {reviews.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">No reviews yet</p>
@@ -562,10 +565,10 @@ const SupplierProfile = () => {
                           <div>
                             <p className="font-semibold text-foreground">{review.customer_name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {new Date(review.created_at).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
+                              {new Date(review.created_at).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
                               })}
                             </p>
                           </div>
@@ -574,17 +577,13 @@ const SupplierProfile = () => {
                               <Star
                                 key={i}
                                 className={`h-4 w-4 ${
-                                  i < review.rating
-                                    ? "fill-primary text-primary"
-                                    : "text-muted-foreground/30"
+                                  i < review.rating ? "fill-primary text-primary" : "text-muted-foreground/30"
                                 }`}
                               />
                             ))}
                           </div>
                         </div>
-                        {review.comment && (
-                          <p className="text-foreground leading-relaxed">{review.comment}</p>
-                        )}
+                        {review.comment && <p className="text-foreground leading-relaxed">{review.comment}</p>}
                       </div>
                     </div>
                   </div>
