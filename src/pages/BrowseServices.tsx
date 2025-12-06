@@ -376,8 +376,14 @@ const BrowseServices = () => {
                               </CarouselItem>)}
                           </CarouselContent>
                           {option.images.length > 1 && <>
-                              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <CarouselPrevious 
+                                className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                onClick={(e) => e.stopPropagation()} 
+                              />
+                              <CarouselNext 
+                                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                onClick={(e) => e.stopPropagation()} 
+                              />
                             </>}
                         </Carousel>
                         {isSelected && <Badge className="absolute top-2 left-2 bg-primary z-10">
