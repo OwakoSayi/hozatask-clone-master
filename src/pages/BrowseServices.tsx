@@ -368,20 +368,25 @@ const BrowseServices = () => {
                       <Checkbox checked={isSelected} className="h-5 w-5 pointer-events-none" />
                     </div>
                     
-                    {option.images && option.images.length > 0 && <div className="relative group">
-                        <Carousel className="w-full">
+                    {option.images && option.images.length > 0 && <div className="relative group" onClick={(e) => e.stopPropagation()}>
+                        <Carousel className="w-full" opts={{ dragFree: false }}>
                           <CarouselContent>
                             {option.images.map((img, idx) => <CarouselItem key={idx}>
-                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-80 object-cover border-2" />
+                                <img 
+                                  src={img} 
+                                  alt={`${option.title} ${idx + 1}`} 
+                                  className="w-full h-80 object-cover border-2 cursor-grab active:cursor-grabbing" 
+                                  onClick={() => setSelectedService(option)}
+                                />
                               </CarouselItem>)}
                           </CarouselContent>
                           {option.images.length > 1 && <>
                               <CarouselPrevious 
-                                className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" 
                                 onClick={(e) => e.stopPropagation()} 
                               />
                               <CarouselNext 
-                                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" 
+                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" 
                                 onClick={(e) => e.stopPropagation()} 
                               />
                             </>}
