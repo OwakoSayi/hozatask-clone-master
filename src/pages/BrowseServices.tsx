@@ -438,11 +438,11 @@ const BrowseServices = () => {
                     <CarouselContent>
                       {selectedService.images.map((img, idx) => (
                         <CarouselItem key={idx}>
-                          <div className="aspect-square w-full">
+                          <div className="aspect-square w-full bg-muted">
                             <img
                               src={img}
                               alt={`${selectedService.title} ${idx + 1}`}
-                              className="w-full h-full object-cover cursor-grab active:cursor-grabbing"
+                              className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
                             />
                           </div>
                         </CarouselItem>
