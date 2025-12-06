@@ -301,11 +301,7 @@ const BrowseServices = () => {
           <div className="grid md:grid-cols-4 gap-4 mb-6">
             <div>
               <label className="text-sm font-medium mb-2 block">Search Category</label>
-              <CategoryCombobox
-                value={categoryFilter === "all" ? "" : categoryFilter}
-                onValueChange={(value) => handleCategoryChange(value || "all")}
-                placeholder="Type to search..."
-              />
+              <CategoryCombobox value={categoryFilter === "all" ? "" : categoryFilter} onValueChange={value => handleCategoryChange(value || "all")} placeholder="Type to search..." />
             </div>
 
             <div>
@@ -368,27 +364,18 @@ const BrowseServices = () => {
                       <Checkbox checked={isSelected} className="h-5 w-5 pointer-events-none" />
                     </div>
                     
-                    {option.images && option.images.length > 0 && <div className="relative group" onClick={(e) => e.stopPropagation()}>
-                        <Carousel className="w-full" opts={{ dragFree: false }}>
+                    {option.images && option.images.length > 0 && <div className="relative group" onClick={e => e.stopPropagation()}>
+                        <Carousel className="w-full" opts={{
+                  dragFree: false
+                }}>
                           <CarouselContent>
                             {option.images.map((img, idx) => <CarouselItem key={idx}>
-                                <img 
-                                  src={img} 
-                                  alt={`${option.title} ${idx + 1}`} 
-                                  className="w-full h-80 object-cover border-2 cursor-grab active:cursor-grabbing" 
-                                  onClick={() => setSelectedService(option)}
-                                />
+                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-80 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
                               </CarouselItem>)}
                           </CarouselContent>
                           {option.images.length > 1 && <>
-                              <CarouselPrevious 
-                                className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" 
-                                onClick={(e) => e.stopPropagation()} 
-                              />
-                              <CarouselNext 
-                                className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" 
-                                onClick={(e) => e.stopPropagation()} 
-                              />
+                              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" onClick={e => e.stopPropagation()} />
+                              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" onClick={e => e.stopPropagation()} />
                             </>}
                         </Carousel>
                         {isSelected && <Badge className="absolute top-2 left-2 bg-primary z-10">
@@ -429,39 +416,28 @@ const BrowseServices = () => {
 
       <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
         <DialogContent className="w-[95vw] h-[95vh] max-w-none p-0 overflow-hidden flex flex-col">
-          {selectedService && (
-            <div className="flex flex-col h-full">
+          {selectedService && <div className="flex flex-col h-full">
               {/* Square Image Carousel Section */}
-              {selectedService.images && selectedService.images.length > 0 && (
-                <div className="relative w-full flex-shrink-0">
-                  <Carousel className="w-full" opts={{ dragFree: false }}>
+              {selectedService.images && selectedService.images.length > 0 && <div className="relative w-full flex-shrink-0">
+                  <Carousel className="w-full" opts={{
+              dragFree: false
+            }}>
                     <CarouselContent>
-                      {selectedService.images.map((img, idx) => (
-                        <CarouselItem key={idx}>
-                          <div className="aspect-square w-full bg-muted">
-                            <img
-                              src={img}
-                              alt={`${selectedService.title} ${idx + 1}`}
-                              className="w-full h-full object-contain cursor-grab active:cursor-grabbing"
-                            />
+                      {selectedService.images.map((img, idx) => <CarouselItem key={idx}>
+                          <div className="aspect-square w-full bg-black">
+                            <img src={img} alt={`${selectedService.title} ${idx + 1}`} className="w-full h-full object-contain cursor-grab active:cursor-grabbing" />
                           </div>
-                        </CarouselItem>
-                      ))}
+                        </CarouselItem>)}
                     </CarouselContent>
-                    {selectedService.images.length > 1 && (
-                      <>
+                    {selectedService.images.length > 1 && <>
                         <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" />
                         <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" />
-                      </>
-                    )}
+                      </>}
                   </Carousel>
-                  {selectedIds.includes(selectedService.id) && (
-                    <Badge className="absolute top-2 right-2 bg-primary z-10">
+                  {selectedIds.includes(selectedService.id) && <Badge className="absolute top-2 right-2 bg-primary z-10">
                       Option {selectedIds.indexOf(selectedService.id) + 1}
-                    </Badge>
-                  )}
-                </div>
-              )}
+                    </Badge>}
+                </div>}
 
               {/* Content - Compact for mobile */}
               <div className="flex-1 p-4 space-y-3 overflow-hidden">
@@ -469,10 +445,7 @@ const BrowseServices = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg font-bold truncate">{selectedService.title}</h2>
-                    <div 
-                      className="flex items-center gap-2 mt-1 cursor-pointer hover:opacity-80 transition-opacity"
-                      onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}
-                    >
+                    <div className="flex items-center gap-2 mt-1 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/supplier/${selectedService.supplier_id}`)}>
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={selectedService.supplier?.images?.[0]} />
                         <AvatarFallback className="text-xs">{selectedService.supplier?.business_name?.[0]}</AvatarFallback>
@@ -501,35 +474,18 @@ const BrowseServices = () => {
 
                 {/* Action Buttons */}
                 <div className="space-y-2 pt-1">
-                  {selectedIds.includes(selectedService.id) ? (
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={(e) => toggleSelection(selectedService.id, e)}
-                    >
+                  {selectedIds.includes(selectedService.id) ? <Button variant="outline" className="w-full" onClick={e => toggleSelection(selectedService.id, e)}>
                       Remove from Selection
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="w-full"
-                      onClick={(e) => toggleSelection(selectedService.id, e)}
-                      disabled={selectedIds.length >= 3}
-                    >
+                    </Button> : <Button className="w-full" onClick={e => toggleSelection(selectedService.id, e)} disabled={selectedIds.length >= 3}>
                       Add as Option {selectedIds.length + 1}
-                    </Button>
-                  )}
+                    </Button>}
                   
-                  <Button 
-                    variant="ghost" 
-                    className="w-full text-muted-foreground"
-                    onClick={() => setSelectedService(null)}
-                  >
+                  <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => setSelectedService(null)}>
                     ← Add More Options
                   </Button>
                 </div>
               </div>
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
     </div>;
