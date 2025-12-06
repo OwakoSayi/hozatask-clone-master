@@ -431,16 +431,32 @@ const BrowseServices = () => {
         <DialogContent className="w-[95vw] h-[95vh] max-w-none p-0 overflow-hidden flex flex-col">
           {selectedService && (
             <div className="flex flex-col h-full">
-              {/* Square-ish Image Section */}
+              {/* Square Image Carousel Section */}
               {selectedService.images && selectedService.images.length > 0 && (
-                <div className="relative aspect-[4/3] w-full flex-shrink-0">
-                  <img
-                    src={selectedService.images[0]}
-                    alt={selectedService.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="relative w-full flex-shrink-0">
+                  <Carousel className="w-full" opts={{ dragFree: false }}>
+                    <CarouselContent>
+                      {selectedService.images.map((img, idx) => (
+                        <CarouselItem key={idx}>
+                          <div className="aspect-square w-full">
+                            <img
+                              src={img}
+                              alt={`${selectedService.title} ${idx + 1}`}
+                              className="w-full h-full object-cover cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {selectedService.images.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" />
+                      </>
+                    )}
+                  </Carousel>
                   {selectedIds.includes(selectedService.id) && (
-                    <Badge className="absolute top-2 right-2 bg-primary">
+                    <Badge className="absolute top-2 right-2 bg-primary z-10">
                       Option {selectedIds.indexOf(selectedService.id) + 1}
                     </Badge>
                   )}
