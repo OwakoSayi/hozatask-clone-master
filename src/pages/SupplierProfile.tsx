@@ -3,7 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -110,6 +111,7 @@ const SupplierProfile = () => {
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
   const [completedJobs, setCompletedJobs] = useState(0);
+  const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
 
   useEffect(() => {
     loadSupplierData();
@@ -403,7 +405,7 @@ const SupplierProfile = () => {
                 <Card
                   key={option.id}
                   className="cursor-pointer transition-all hover:shadow-lg overflow-hidden"
-                  onClick={() => handleServiceSelect(option.id)}
+                  onClick={() => setSelectedService(option)}
                 >
                   {option.images && option.images.length > 0 && (
                     <div className="relative group">
@@ -455,6 +457,83 @@ const SupplierProfile = () => {
                 </Card>
               ))}
             </div>
+
+            {/* Service Detail Dialog */}
+            <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
+              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                {selectedService && (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className="text-xl">{selectedService.title}</DialogTitle>
+                    </DialogHeader>
+                    
+                    {selectedService.images && selectedService.images.length > 0 && (
+                      <div className="relative">
+                        <Carousel className="w-full">
+                          <CarouselContent>
+                            {selectedService.images.map((img, idx) => (
+                              <CarouselItem key={idx}>
+                                <div className="aspect-square w-full bg-muted">
+                                  <img
+                                    src={img}
+                                    alt={`${selectedService.title} ${idx + 1}`}
+                                    className="w-full h-full object-contain"
+                                  />
+                                </div>
+                              </CarouselItem>
+                            ))}
+                          </CarouselContent>
+                          {selectedService.images.length > 1 && (
+                            <>
+                              <CarouselPrevious className="left-2" />
+                              <CarouselNext className="right-2" />
+                            </>
+                          )}
+                        </Carousel>
+                      </div>
+                    )}
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-2xl font-bold text-foreground">
+                          R{selectedService.price}
+                          {selectedService.time_frame && (
+                            <span className="text-base font-normal text-muted-foreground ml-1">
+                              / {selectedService.time_frame.replace('per ', '')}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+
+                      {selectedService.location_area && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span>{selectedService.location_area}</span>
+                        </div>
+                      )}
+
+                      {selectedService.description && (
+                        <div>
+                          <h4 className="font-semibold text-foreground mb-2">Description</h4>
+                          <p className="text-muted-foreground">{selectedService.description}</p>
+                        </div>
+                      )}
+
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={() => {
+                          handleServiceSelect(selectedService.id);
+                          setSelectedService(null);
+                        }}
+                      >
+                        Book This Service
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 
