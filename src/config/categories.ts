@@ -18,7 +18,6 @@ export const CATEGORY_GROUPS = [
   "Education & Tutoring",
   "Pet Services",
   "Child Care",
-  "Professional Services",
   "Specialized Services",
 ] as const;
 
@@ -108,14 +107,6 @@ export const CATEGORIES: Category[] = [
   // Child Care
   { name: "Babysitting", icon: "👶", slug: "babysitting", group: "Child Care" },
   { name: "Nanny Services", icon: "👪", slug: "nanny", group: "Child Care" },
-  
-  // Professional Services
-  { name: "Legal Services", icon: "⚖️", slug: "legal", group: "Professional Services" },
-  { name: "Accounting & Bookkeeping", icon: "📊", slug: "accounting", group: "Professional Services" },
-  { name: "Business Consulting", icon: "💼", slug: "consulting", group: "Professional Services" },
-  { name: "Virtual Assistant", icon: "📋", slug: "virtual-assistant", group: "Professional Services" },
-  { name: "Translation Services", icon: "🌍", slug: "translation", group: "Professional Services" },
-  { name: "Writing & Editing", icon: "✍️", slug: "writing", group: "Professional Services" },
   
   // Specialized Services
   { name: "Locksmith", icon: "🔑", slug: "locksmith", group: "Specialized Services" },
