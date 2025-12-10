@@ -39,6 +39,7 @@ export const CATEGORIES: Category[] = [
   { name: "Carpet Cleaning", icon: "🧽", slug: "carpet-cleaning", group: "Cleaning" },
   { name: "Window Cleaning", icon: "🪟", slug: "window-cleaning", group: "Cleaning" },
   { name: "Pressure Washing", icon: "💦", slug: "pressure-washing", group: "Cleaning" },
+  { name: "Laundry Services", icon: "🧺", slug: "laundry-services", group: "Cleaning" },
   
   // Moving & Assembly
   { name: "Moving & Delivery", icon: "🚚", slug: "moving", group: "Moving & Assembly" },
