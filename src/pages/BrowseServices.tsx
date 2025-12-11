@@ -151,18 +151,36 @@ const BrowseServices = () => {
   };
   const loadServiceOptions = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("service_options").select(`
-          *,
-          supplier:suppliers(business_name, contact_name, images)
-        `).eq("is_active", true);
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      let data;
+      let error;
+      
+      if (session) {
+        // Authenticated users get full data with supplier info
+        const result = await supabase.from("service_options").select(`
+            *,
+            supplier:suppliers(business_name, contact_name, images)
+          `).eq("is_active", true);
+        data = result.data;
+        error = result.error;
+      } else {
+        // Anonymous users get public view (no sensitive data)
+        const result = await supabase.from("public_service_options").select("*");
+        data = result.data?.map(opt => ({
+          ...opt,
+          supplier_id: null, // Not exposed in public view
+          supplier: null // No supplier info for anonymous users
+        }));
+        error = result.error;
+      }
+      
       if (error) throw error;
-      setOptions(data || []);
+      setOptions((data || []) as ServiceOption[]);
 
       // Extract unique categories
-      const uniqueCategories = Array.from(new Set(data?.map(opt => opt.category) || []));
+      const uniqueCategories = Array.from(new Set((data || []).map((opt: ServiceOption) => opt.category))) as string[];
       setCategories(uniqueCategories);
     } catch (error) {
       console.error("Error loading service options:", error);
