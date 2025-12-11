@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronRight, ChevronDown, Filter } from "lucide-react";
 import { getGroupedCategories, CATEGORY_GROUPS } from "@/config/categories";
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 interface ServiceOption {
@@ -71,6 +72,7 @@ const BrowseServices = () => {
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
   const [userCity, setUserCity] = useState<string | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string>("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const groupedCategories = getGroupedCategories();
   useEffect(() => {
     loadServiceOptions();
@@ -320,50 +322,67 @@ const BrowseServices = () => {
             Explore all available services and filter by category or location
           </p>
 
-          {/* Filters */}
-          <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Search Category</label>
-              <CategoryCombobox value={categoryFilter === "all" ? "" : categoryFilter} onValueChange={value => handleCategoryChange(value || "all")} placeholder="Type to search..." />
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Category Group</label>
-              <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Services" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Services</SelectItem>
-                  {CATEGORY_GROUPS.map(group => <SelectItem key={group} value={group}>
-                      {group}
-                    </SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Location</label>
-              <Input placeholder="Search by location..." value={locationSearch} onChange={e => setLocationSearch(e.target.value)} />
-            </div>
-
-            <div className="flex items-end">
-              <Button variant="outline" onClick={clearFilters} className="w-full">
-                Clear Filters
+          {/* Collapsible Filters */}
+          <Collapsible open={filtersOpen} onOpenChange={setFiltersOpen} className="mb-6">
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between mb-4">
+                <span className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  Filters & Categories
+                  {(categoryFilter !== "all" || locationSearch) && (
+                    <Badge variant="secondary" className="ml-2">Active</Badge>
+                  )}
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
               </Button>
-            </div>
-          </div>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4">
+              {/* Search Filters */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Search Category</label>
+                  <CategoryCombobox value={categoryFilter === "all" ? "" : categoryFilter} onValueChange={value => handleCategoryChange(value || "all")} placeholder="Type to search..." />
+                </div>
 
-          {/* Category Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
-            {(selectedGroup === "all" ? categories : groupedCategories.find(g => g.group === selectedGroup)?.categories.map(c => c.name) || []).map(cat => {
-            const categoryData = groupedCategories.flatMap(g => g.categories).find(c => c.name === cat);
-            return <Button key={cat} variant={categoryFilter === cat ? "default" : "outline"} onClick={() => handleCategoryChange(cat)} className="h-auto py-3 px-2 flex flex-col items-center gap-2 text-xs">
-                  <span className="text-xl">{categoryData?.icon || "📋"}</span>
-                  <span className="text-center line-clamp-2">{cat}</span>
-                </Button>;
-          })}
-          </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Category Group</label>
+                  <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="All Services" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Services</SelectItem>
+                      {CATEGORY_GROUPS.map(group => <SelectItem key={group} value={group}>
+                          {group}
+                        </SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Location</label>
+                  <Input placeholder="Search by location..." value={locationSearch} onChange={e => setLocationSearch(e.target.value)} />
+                </div>
+
+                <div className="flex items-end">
+                  <Button variant="outline" onClick={clearFilters} className="w-full">
+                    Clear Filters
+                  </Button>
+                </div>
+              </div>
+
+              {/* Category Grid */}
+              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {(selectedGroup === "all" ? categories : groupedCategories.find(g => g.group === selectedGroup)?.categories.map(c => c.name) || []).map(cat => {
+                const categoryData = groupedCategories.flatMap(g => g.categories).find(c => c.name === cat);
+                return <Button key={cat} variant={categoryFilter === cat ? "default" : "outline"} onClick={() => handleCategoryChange(cat)} className="h-auto py-2 px-2 flex flex-col items-center gap-1 text-xs">
+                      <span className="text-lg">{categoryData?.icon || "📋"}</span>
+                      <span className="text-center line-clamp-2">{cat}</span>
+                    </Button>;
+              })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
 
           <p className="text-sm text-muted-foreground">
             {filteredOptions.length} service{filteredOptions.length !== 1 ? "s" : ""} found • {selectedIds.length}/3 selected
@@ -378,13 +397,13 @@ const BrowseServices = () => {
               </Button>
             </CardContent>
           </Card> : <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-8">
               {filteredOptions.map(option => {
             const isSelected = selectedIds.includes(option.id);
             return <Card key={option.id} className={`cursor-pointer transition-all hover:shadow-lg overflow-hidden relative ${isSelected ? "ring-2 ring-primary" : ""}`} onClick={() => setSelectedService(option)}>
                     {/* Selection Checkbox */}
-                    <div className="absolute top-2 right-2 z-20 bg-background/90 backdrop-blur-sm rounded-full p-1.5 shadow-md hover:bg-background transition-colors" onClick={e => toggleSelection(option.id, e)}>
-                      <Checkbox checked={isSelected} className="h-5 w-5 pointer-events-none" />
+                    <div className="absolute top-1 right-1 md:top-2 md:right-2 z-20 bg-background/90 backdrop-blur-sm rounded-full p-1 md:p-1.5 shadow-md hover:bg-background transition-colors" onClick={e => toggleSelection(option.id, e)}>
+                      <Checkbox checked={isSelected} className="h-4 w-4 md:h-5 md:w-5 pointer-events-none" />
                     </div>
                     
                     {option.images && option.images.length > 0 && <div className="relative group" onClick={e => e.stopPropagation()}>
@@ -393,7 +412,7 @@ const BrowseServices = () => {
                 }}>
                           <CarouselContent>
                             {option.images.map((img, idx) => <CarouselItem key={idx}>
-                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-64 lg:h-44 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
+                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-36 md:h-64 lg:h-44 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
                               </CarouselItem>)}
                           </CarouselContent>
                           {option.images.length > 1 && <>
@@ -408,15 +427,15 @@ const BrowseServices = () => {
                           {option.category}
                         </Badge>
                       </div>}
-                    <CardContent className="pt-4 pb-4">
-                      <div className="font-bold text-xl mb-1">
+                    <CardContent className="p-2 md:pt-4 md:pb-4 md:px-6">
+                      <div className="font-bold text-base md:text-xl mb-0.5 md:mb-1">
                         R{option.price}
-                        <span className="text-sm text-muted-foreground font-normal ml-1">
+                        <span className="text-xs md:text-sm text-muted-foreground font-normal ml-1">
                           {option.time_frame}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-base mb-1 line-clamp-2">{option.title}</h3>
-                      <p className="text-sm text-muted-foreground">{option.location_area}</p>
+                      <h3 className="font-semibold text-sm md:text-base mb-0.5 md:mb-1 line-clamp-2">{option.title}</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">{option.location_area}</p>
                     </CardContent>
                   </Card>;
           })}
