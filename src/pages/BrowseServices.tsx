@@ -419,9 +419,9 @@ const BrowseServices = () => {
           {selectedService && <div className="flex flex-col lg:flex-row h-full">
               {/* Square Image Carousel Section - Half width on desktop */}
               {selectedService.images && selectedService.images.length > 0 && <div className="relative w-full lg:w-1/2 flex-shrink-0 lg:h-full">
-                  <Carousel className="w-full h-full" opts={{
+                  <Carousel opts={{
               dragFree: false
-            }}>
+            }} className="w-full h-full bg-popover-foreground">
                     <CarouselContent className="h-full">
                       {selectedService.images.map((img, idx) => <CarouselItem key={idx} className="h-full">
                           <div className="aspect-square lg:aspect-auto lg:h-full w-full bg-black">
