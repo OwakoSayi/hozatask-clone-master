@@ -424,7 +424,7 @@ const BrowseServices = () => {
             }} className="w-full h-full bg-popover-foreground">
                     <CarouselContent className="h-full">
                       {selectedService.images.map((img, idx) => <CarouselItem key={idx} className="h-full">
-                          <div className="aspect-square lg:aspect-auto lg:h-full w-full bg-black">
+                          <div className="aspect-square lg:aspect-auto lg:h-full w-full bg-black flex items-center justify-center">
                             <img src={img} alt={`${selectedService.title} ${idx + 1}`} className="w-full h-full object-contain cursor-grab active:cursor-grabbing" />
                           </div>
                         </CarouselItem>)}
