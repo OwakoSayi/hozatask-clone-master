@@ -80,6 +80,11 @@ const BrowseServices = () => {
     const categoryParam = searchParams.get('category');
     if (categoryParam) {
       setCategoryFilter(categoryParam);
+      // Find and set the corresponding group for this category
+      const categoryData = groupedCategories.flatMap(g => g.categories).find(c => c.name === categoryParam);
+      if (categoryData) {
+        setSelectedGroup(categoryData.group);
+      }
     }
 
     // Subscribe to realtime updates for service_options
