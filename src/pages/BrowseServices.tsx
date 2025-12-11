@@ -370,7 +370,7 @@ const BrowseServices = () => {
                 }}>
                           <CarouselContent>
                             {option.images.map((img, idx) => <CarouselItem key={idx}>
-                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-80 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
+                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-64 lg:h-44 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
                               </CarouselItem>)}
                           </CarouselContent>
                           {option.images.length > 1 && <>
