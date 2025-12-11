@@ -101,6 +101,13 @@ export type Database = {
             foreignKeyName: "bookings_matched_supplier_id_fkey"
             columns: ["matched_supplier_id"]
             isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_matched_supplier_id_fkey"
+            columns: ["matched_supplier_id"]
+            isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
@@ -185,6 +192,13 @@ export type Database = {
             foreignKeyName: "reviews_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
@@ -231,6 +245,13 @@ export type Database = {
           title?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "service_options_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "service_options_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -296,7 +317,87 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_service_options: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          images: string[] | null
+          is_active: boolean | null
+          location_area: string | null
+          price: number | null
+          time_frame: string | null
+          title: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          location_area?: string | null
+          price?: number | null
+          time_frame?: string | null
+          title?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          images?: string[] | null
+          is_active?: boolean | null
+          location_area?: string | null
+          price?: number | null
+          time_frame?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      public_suppliers: {
+        Row: {
+          business_name: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          images: string[] | null
+          location: string | null
+          price: number | null
+          status: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame: string | null
+          title: string | null
+        }
+        Insert: {
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          images?: string[] | null
+          location?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame?: string | null
+          title?: string | null
+        }
+        Update: {
+          business_name?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          images?: string[] | null
+          location?: string | null
+          price?: number | null
+          status?: Database["public"]["Enums"]["supplier_status"] | null
+          time_frame?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       calculate_distance: {
