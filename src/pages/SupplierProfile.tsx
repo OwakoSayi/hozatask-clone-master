@@ -215,8 +215,24 @@ const SupplierProfile = () => {
         <div className="flex-1 flex items-center justify-center">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">Supplier not found</p>
-              <Button onClick={() => navigate("/browse")}>Browse Services</Button>
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Sign Up to View Supplier Details</h2>
+              <p className="text-muted-foreground mb-6">
+                Create an account to access full supplier profiles, contact information, and book services.
+              </p>
+              <div className="space-y-3">
+                <Button onClick={() => navigate("/auth", { state: { returnTo: `/supplier/${id}` } })} className="w-full">
+                  Sign Up / Login
+                </Button>
+                <Button variant="outline" onClick={() => navigate("/browse")} className="w-full">
+                  Browse Services
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Already have an account? Click Sign Up / Login above to access your account.
+              </p>
             </CardContent>
           </Card>
         </div>
