@@ -355,7 +355,7 @@ const BrowseServices = () => {
               </Button>
             </CardContent>
           </Card> : <>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
               {filteredOptions.map(option => {
             const isSelected = selectedIds.includes(option.id);
             return <Card key={option.id} className={`cursor-pointer transition-all hover:shadow-lg overflow-hidden relative ${isSelected ? "ring-2 ring-primary" : ""}`} onClick={() => setSelectedService(option)}>
@@ -364,37 +364,44 @@ const BrowseServices = () => {
                       <Checkbox checked={isSelected} className="h-5 w-5 pointer-events-none" />
                     </div>
                     
-                    {option.images && option.images.length > 0 && <div className="relative group" onClick={e => e.stopPropagation()}>
-                        <Carousel className="w-full" opts={{
-                  dragFree: false
-                }}>
-                          <CarouselContent>
-                            {option.images.map((img, idx) => <CarouselItem key={idx}>
-                                <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-64 lg:h-44 object-cover border-2 cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
-                              </CarouselItem>)}
-                          </CarouselContent>
-                          {option.images.length > 1 && <>
-                              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" onClick={e => e.stopPropagation()} />
-                              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md" onClick={e => e.stopPropagation()} />
-                            </>}
-                        </Carousel>
-                        {isSelected && <Badge className="absolute top-2 left-2 bg-primary z-10">
-                            Option {selectedIds.indexOf(option.id) + 1}
-                          </Badge>}
-                        <Badge variant="secondary" className="absolute bottom-2 left-2 text-xs capitalize z-10">
-                          {option.category}
-                        </Badge>
-                      </div>}
-                    <CardContent className="pt-4 pb-4">
-                      <div className="font-bold text-xl mb-1">
-                        R{option.price}
-                        <span className="text-sm text-muted-foreground font-normal ml-1">
-                          {option.time_frame}
-                        </span>
+                    <div className="flex flex-col lg:flex-row">
+                      {/* Image Section - Left on desktop */}
+                      {option.images && option.images.length > 0 && <div className="relative group lg:w-48 lg:flex-shrink-0" onClick={e => e.stopPropagation()}>
+                          <Carousel className="w-full" opts={{
+                    dragFree: false
+                  }}>
+                            <CarouselContent>
+                              {option.images.map((img, idx) => <CarouselItem key={idx}>
+                                  <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-56 lg:h-36 object-cover cursor-grab active:cursor-grabbing" onClick={() => setSelectedService(option)} />
+                                </CarouselItem>)}
+                            </CarouselContent>
+                            {option.images.length > 1 && <>
+                                <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md h-7 w-7" onClick={e => e.stopPropagation()} />
+                                <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background shadow-md h-7 w-7" onClick={e => e.stopPropagation()} />
+                              </>}
+                          </Carousel>
+                          {isSelected && <Badge className="absolute top-2 left-2 bg-primary z-10 text-xs">
+                              Option {selectedIds.indexOf(option.id) + 1}
+                            </Badge>}
+                        </div>}
+                      
+                      {/* Details Section - Right on desktop */}
+                      <div className="flex-1 p-4 flex flex-col justify-between">
+                        <div>
+                          <Badge variant="secondary" className="text-xs capitalize mb-2">
+                            {option.category}
+                          </Badge>
+                          <h3 className="font-semibold text-base mb-1 line-clamp-2">{option.title}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-1">{option.location_area}</p>
+                        </div>
+                        <div className="font-bold text-lg mt-2">
+                          R{option.price}
+                          <span className="text-sm text-muted-foreground font-normal ml-1">
+                            {option.time_frame}
+                          </span>
+                        </div>
                       </div>
-                      <h3 className="font-semibold text-base mb-1 line-clamp-2">{option.title}</h3>
-                      <p className="text-sm text-muted-foreground">{option.location_area}</p>
-                    </CardContent>
+                    </div>
                   </Card>;
           })}
             </div>
