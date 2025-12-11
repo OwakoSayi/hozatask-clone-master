@@ -416,15 +416,15 @@ const BrowseServices = () => {
 
       <Dialog open={!!selectedService} onOpenChange={() => setSelectedService(null)}>
         <DialogContent className="w-[95vw] h-[95vh] max-w-none p-0 overflow-hidden flex flex-col">
-          {selectedService && <div className="flex flex-col h-full">
-              {/* Square Image Carousel Section */}
-              {selectedService.images && selectedService.images.length > 0 && <div className="relative w-full flex-shrink-0">
-                  <Carousel className="w-full" opts={{
+          {selectedService && <div className="flex flex-col lg:flex-row h-full">
+              {/* Square Image Carousel Section - Half width on desktop */}
+              {selectedService.images && selectedService.images.length > 0 && <div className="relative w-full lg:w-1/2 flex-shrink-0 lg:h-full">
+                  <Carousel className="w-full h-full" opts={{
               dragFree: false
             }}>
-                    <CarouselContent>
-                      {selectedService.images.map((img, idx) => <CarouselItem key={idx}>
-                          <div className="aspect-square w-full bg-black">
+                    <CarouselContent className="h-full">
+                      {selectedService.images.map((img, idx) => <CarouselItem key={idx} className="h-full">
+                          <div className="aspect-square lg:aspect-auto lg:h-full w-full bg-black">
                             <img src={img} alt={`${selectedService.title} ${idx + 1}`} className="w-full h-full object-contain cursor-grab active:cursor-grabbing" />
                           </div>
                         </CarouselItem>)}
@@ -439,8 +439,8 @@ const BrowseServices = () => {
                     </Badge>}
                 </div>}
 
-              {/* Content - Compact for mobile */}
-              <div className="flex-1 p-4 space-y-3 overflow-hidden">
+              {/* Content - Half width on desktop, scrollable */}
+              <div className="flex-1 lg:w-1/2 p-4 space-y-3 overflow-y-auto">
                 {/* Title & Supplier Row */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
