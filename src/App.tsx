@@ -19,6 +19,7 @@ import BuyCredits from "./pages/BuyCredits";
 import PaymentCallback from "./pages/PaymentCallback";
 import Messages from "./pages/Messages";
 import CostGuide from "./pages/CostGuide";
+import BecomePro from "./pages/BecomePro";
 
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -51,7 +52,8 @@ const App = () => (
           <Route path="/project/:id" element={<ProjectDetail />} />
           
           {/* Pro flow */}
-          <Route path="/become-pro" element={<SupplierSubmission />} />
+          <Route path="/become-pro" element={<BecomePro />} />
+          <Route path="/become-pro/signup" element={<SupplierSubmission />} />
           <Route path="/pro-dashboard" element={<SupplierDashboard />} />
           <Route path="/leads" element={<ProLeads />} />
           <Route path="/buy-credits" element={<BuyCredits />} />
