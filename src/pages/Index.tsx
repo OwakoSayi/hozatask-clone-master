@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { CATEGORIES, CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
-import { Search, MapPin, Shield, Clock, CheckCircle, ChevronRight, Star } from "lucide-react";
+import { Shield, Clock, CheckCircle, ChevronRight, Star } from "lucide-react";
+import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const popularServices = [
@@ -92,27 +92,24 @@ const Index = () => {
             <span className="text-primary">made easy.</span>
           </h1>
 
-          {/* Search Bar - Thumbtack style */}
+          {/* Search Bar - Thumbtack style with autocomplete */}
           <div className="flex flex-col md:flex-row gap-3 max-w-2xl mx-auto bg-background border border-border rounded-lg p-2 shadow-lg">
-            <div className="flex-1 flex items-center gap-2 px-3">
-              <Search className="h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Describe your project or problem — be as detailed as you'd like."
-                className="border-0 shadow-none focus-visible:ring-0 text-base"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
-            <div className="flex items-center gap-2 px-3 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0">
-              <MapPin className="h-5 w-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Location"
-                className="border-0 shadow-none focus-visible:ring-0 w-32"
+            <SearchAutocomplete
+              type="service"
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onKeyPress={handleKeyPress}
+              placeholder="What do you need help with?"
+              className="text-base"
+            />
+            <div className="border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0 md:pl-2">
+              <SearchAutocomplete
+                type="location"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={setLocation}
+                onKeyPress={handleKeyPress}
+                placeholder="Location"
+                className="w-full md:w-40"
               />
             </div>
             <Button onClick={handleSearch} size="lg" className="px-8">
