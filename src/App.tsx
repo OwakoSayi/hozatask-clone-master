@@ -16,6 +16,7 @@ import MyProjects from "./pages/MyProjects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProLeads from "./pages/ProLeads";
 import BuyCredits from "./pages/BuyCredits";
+import PaymentCallback from "./pages/PaymentCallback";
 import Messages from "./pages/Messages";
 import CostGuide from "./pages/CostGuide";
 
@@ -54,6 +55,7 @@ const App = () => (
           <Route path="/pro-dashboard" element={<SupplierDashboard />} />
           <Route path="/leads" element={<ProLeads />} />
           <Route path="/buy-credits" element={<BuyCredits />} />
+          <Route path="/payment-callback" element={<PaymentCallback />} />
           
           {/* Messaging */}
           <Route path="/messages" element={<Messages />} />

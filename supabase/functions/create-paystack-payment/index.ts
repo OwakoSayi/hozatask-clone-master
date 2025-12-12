@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email, amount, reference } = await req.json();
+    const { email, amount, reference, metadata } = await req.json();
 
     if (!email || !amount || !reference) {
       return new Response(
@@ -31,6 +31,12 @@ serve(async (req) => {
       );
     }
 
+    // Get the origin for callback URL
+    const origin = req.headers.get('origin') || 'https://uxmdbznodlamunpjiggn.lovableproject.com';
+    const callbackUrl = `${origin}/payment-callback`;
+
+    console.log("Initializing Paystack payment:", { email, amount, reference, callbackUrl });
+
     // Initialize payment with Paystack
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -40,10 +46,11 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         email,
-        amount: amount * 100, // Convert to kobo/cents
+        amount: Math.round(amount * 100), // Convert to kobo/cents
         currency: 'ZAR',
         reference,
-        callback_url: `${req.headers.get('origin')}/booking-confirmation`,
+        callback_url: callbackUrl,
+        metadata: metadata || {},
       }),
     });
 
