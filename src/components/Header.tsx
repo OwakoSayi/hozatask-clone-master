@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, ChevronDown, User } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight, User } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -24,6 +24,11 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "./ui/navigation-menu";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "./ui/collapsible";
 import { CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
 
 export const Header = () => {
@@ -80,70 +85,120 @@ export const Header = () => {
     navigate(path);
   };
 
-  const MobileNav = () => (
-    <div className="flex flex-col gap-2 mt-8">
-      <Button variant="ghost" onClick={() => handleNavigate("/post-project")} className="w-full justify-start">
-        Get Quotes
-      </Button>
-      <Button variant="ghost" onClick={() => handleNavigate("/pros")} className="w-full justify-start">
-        Find Pros
-      </Button>
-      <Button variant="ghost" onClick={() => handleNavigate("/cost-guides")} className="w-full justify-start">
-        Cost Guides
-      </Button>
-      
-      <div className="border-t border-border my-4" />
-      
-      {!user && (
-        <>
-          <Button variant="ghost" onClick={() => handleNavigate("/become-pro")} className="w-full justify-start">
-            Join as a pro
-          </Button>
-          <Button variant="outline" onClick={() => handleNavigate("/auth")} className="w-full">
-            Sign up
-          </Button>
-          <Button onClick={() => handleNavigate("/auth")} className="w-full">
-            Log in
-          </Button>
-        </>
-      )}
-      
-      {user && isSupplier && (
-        <>
-          <Button variant="ghost" onClick={() => handleNavigate("/leads")} className="w-full justify-start">
-            Leads
-          </Button>
-          <Button variant="ghost" onClick={() => handleNavigate("/pro-dashboard")} className="w-full justify-start">
-            Dashboard
-          </Button>
-          <Button variant="ghost" onClick={() => handleNavigate("/buy-credits")} className="w-full justify-start">
-            Buy Credits
-          </Button>
-        </>
-      )}
-      
-      {user && (
-        <>
-          <Button variant="ghost" onClick={() => handleNavigate("/messages")} className="w-full justify-start">
-            Messages
-          </Button>
-          {!isSupplier && (
-            <>
-              <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-start">
-                My Projects
-              </Button>
-              <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full justify-start">
-                Account
-              </Button>
-            </>
-          )}
-          <Button variant="destructive" onClick={handleLogout} className="w-full">
-            Log out
-          </Button>
-        </>
-      )}
-    </div>
-  );
+  const MobileNav = () => {
+    const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+    const [showServices, setShowServices] = useState(false);
+
+    return (
+      <div className="flex flex-col gap-1 mt-6">
+        {/* Explore Services - Expandable */}
+        <Collapsible open={showServices} onOpenChange={setShowServices}>
+          <CollapsibleTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-between font-semibold text-base py-3"
+            >
+              Explore Services
+              <ChevronDown className={`h-4 w-4 transition-transform ${showServices ? "rotate-180" : ""}`} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pl-2 space-y-1">
+            {CATEGORY_GROUPS.slice(0, 8).map((group) => (
+              <Collapsible 
+                key={group}
+                open={expandedGroup === group}
+                onOpenChange={(open) => setExpandedGroup(open ? group : null)}
+              >
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-between text-sm py-2 h-auto"
+                  >
+                    {group}
+                    <ChevronRight className={`h-4 w-4 transition-transform ${expandedGroup === group ? "rotate-90" : ""}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pl-4 space-y-1">
+                  {getCategoriesByGroup(group).slice(0, 5).map((cat) => (
+                    <Button
+                      key={cat.slug}
+                      variant="ghost"
+                      className="w-full justify-start text-sm py-2 h-auto text-muted-foreground"
+                      onClick={() => handleNavigate(`/post-project?category=${encodeURIComponent(cat.name)}`)}
+                    >
+                      <span className="mr-2">{cat.icon}</span>
+                      {cat.name}
+                    </Button>
+                  ))}
+                </CollapsibleContent>
+              </Collapsible>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+
+        <Button variant="ghost" onClick={() => handleNavigate("/post-project")} className="w-full justify-start">
+          Get Quotes
+        </Button>
+        <Button variant="ghost" onClick={() => handleNavigate("/pros")} className="w-full justify-start">
+          Find Pros
+        </Button>
+        <Button variant="ghost" onClick={() => handleNavigate("/cost-guides")} className="w-full justify-start">
+          Cost Guides
+        </Button>
+        
+        <div className="border-t border-border my-4" />
+        
+        {!user && (
+          <>
+            <Button variant="ghost" onClick={() => handleNavigate("/become-pro")} className="w-full justify-start">
+              Join as a pro
+            </Button>
+            <Button variant="outline" onClick={() => handleNavigate("/auth")} className="w-full">
+              Sign up
+            </Button>
+            <Button onClick={() => handleNavigate("/auth")} className="w-full">
+              Log in
+            </Button>
+          </>
+        )}
+        
+        {user && isSupplier && (
+          <>
+            <Button variant="ghost" onClick={() => handleNavigate("/leads")} className="w-full justify-start">
+              Leads
+            </Button>
+            <Button variant="ghost" onClick={() => handleNavigate("/pro-dashboard")} className="w-full justify-start">
+              Dashboard
+            </Button>
+            <Button variant="ghost" onClick={() => handleNavigate("/buy-credits")} className="w-full justify-start">
+              Buy Credits
+            </Button>
+          </>
+        )}
+        
+        {user && (
+          <>
+            <Button variant="ghost" onClick={() => handleNavigate("/messages")} className="w-full justify-start">
+              Messages
+            </Button>
+            {!isSupplier && (
+              <>
+                <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-start">
+                  My Projects
+                </Button>
+                <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full justify-start">
+                  Account
+                </Button>
+              </>
+            )}
+            <Button variant="destructive" onClick={handleLogout} className="w-full">
+              Log out
+            </Button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <header className="border-b border-border bg-background sticky top-0 z-50">
