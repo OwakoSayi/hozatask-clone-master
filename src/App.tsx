@@ -14,6 +14,11 @@ import BookingConfirmation from "./pages/BookingConfirmation";
 import SupplierSubmission from "./pages/SupplierSubmission";
 import SupplierProfile from "./pages/SupplierProfile";
 import SupplierDashboard from "./pages/SupplierDashboard";
+import SupplierDirectory from "./pages/SupplierDirectory";
+import PostProject from "./pages/PostProject";
+import MyProjects from "./pages/MyProjects";
+import ProjectDetail from "./pages/ProjectDetail";
+import ProLeads from "./pages/ProLeads";
 
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -35,12 +40,19 @@ const App = () => (
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/browse" element={<BrowseServices />} />
+          <Route path="/suppliers" element={<SupplierDirectory />} />
           <Route path="/category/:category" element={<CategoryListings />} />
           <Route path="/booking" element={<BookingForm />} />
           <Route path="/booking-confirmation" element={<BookingConfirmation />} />
           <Route path="/supplier-submission" element={<SupplierSubmission />} />
           <Route path="/supplier/:id" element={<SupplierProfile />} />
           <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
+          
+          {/* Thumbtack-style project request flow */}
+          <Route path="/post-project" element={<PostProject />} />
+          <Route path="/my-projects" element={<MyProjects />} />
+          <Route path="/project/:id" element={<ProjectDetail />} />
+          <Route path="/pro-leads" element={<ProLeads />} />
           
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
