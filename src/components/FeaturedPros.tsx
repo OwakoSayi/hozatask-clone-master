@@ -125,9 +125,9 @@ export const FeaturedPros = ({
         {showViewAll && (
           <Button
             variant="link"
-            className="text-primary"
+            className="text-primary p-0"
             onClick={() =>
-              navigate(category ? `/suppliers?category=${encodeURIComponent(category)}` : "/suppliers")
+              navigate(category ? `/pros?category=${encodeURIComponent(category)}` : "/pros")
             }
           >
             View all <ChevronRight className="h-4 w-4 ml-1" />
