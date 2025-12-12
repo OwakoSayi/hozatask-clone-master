@@ -1,38 +1,12 @@
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { CATEGORIES } from "@/config/categories";
-import cleaningIcon from "@/assets/cleaning-icon.jpg";
-import handymanIcon from "@/assets/handyman-icon.jpg";
-import movingIcon from "@/assets/moving-icon.jpg";
-import assemblyIcon from "@/assets/assembly-icon.jpg";
+import { getPopularCategories } from "@/config/categories";
 
-const categoryDetails = [
-  {
-    title: "Cleaning",
-    description: "Home cleaning, deep cleaning, organizing",
-    icon: cleaningIcon,
-    price: "From R250/hr",
-  },
-  {
-    title: "Handyman",
-    description: "Repairs, installations, minor fixes",
-    icon: handymanIcon,
-    price: "From $55/hr",
-  },
-  {
-    title: "Moving & Delivery",
-    description: "Help moving, furniture delivery, hauling",
-    icon: movingIcon,
-    price: "From $50/hr",
-  },
-  {
-    title: "Assembly",
-    description: "Furniture assembly, TV mounting, setup",
-    icon: assemblyIcon,
-    price: "From $45/hr",
-  },
-];
+const popularCategories = getPopularCategories().slice(0, 4);
 
 export const Categories = () => {
+  const navigate = useNavigate();
+  
   return (
     <section className="py-20 bg-secondary">
       <div className="container mx-auto px-4">
@@ -43,29 +17,23 @@ export const Categories = () => {
           </p>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categoryDetails.map((category, index) => (
+          {popularCategories.map((category, index) => (
             <Card 
-              key={index}
+              key={category.slug}
               className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group bg-card border-border hover:border-primary/30 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
+              onClick={() => navigate(`/post-project?category=${encodeURIComponent(category.name)}`)}
             >
               <div className="space-y-4">
-                <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <img 
-                    src={category.icon} 
-                    alt={category.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-16 h-16 rounded-full overflow-hidden bg-primary/10 group-hover:bg-primary/20 transition-colors flex items-center justify-center">
+                  <span className="text-3xl">{category.icon}</span>
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors">
-                    {category.title}
+                    {category.name}
                   </h3>
                   <p className="text-muted-foreground text-sm mb-3">
-                    {category.description}
-                  </p>
-                  <p className="text-primary font-semibold text-sm">
-                    {category.price}
+                    {category.group}
                   </p>
                 </div>
               </div>
