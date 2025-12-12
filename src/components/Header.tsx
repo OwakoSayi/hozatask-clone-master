@@ -71,30 +71,41 @@ export const Header = () => {
       <Button variant="ghost" onClick={() => handleNavigate("/post-project")} className="w-full md:w-auto justify-start md:justify-center">
         Get Quotes
       </Button>
-      <Button variant="ghost" onClick={() => handleNavigate("/suppliers")} className="w-full md:w-auto justify-start md:justify-center">
+      <Button variant="ghost" onClick={() => handleNavigate("/pros")} className="w-full md:w-auto justify-start md:justify-center">
         Find Pros
       </Button>
-      {!isSupplier && (
-        <Button variant="outline" size="sm" onClick={() => handleNavigate("/supplier-submission")} className="w-full md:w-auto">
+      <Button variant="ghost" onClick={() => handleNavigate("/cost-guides")} className="w-full md:w-auto justify-start md:justify-center">
+        Cost Guides
+      </Button>
+      {!user && !isSupplier && (
+        <Button variant="outline" size="sm" onClick={() => handleNavigate("/become-pro")} className="w-full md:w-auto">
           Become a Pro
         </Button>
       )}
       {user && isSupplier && (
         <>
-          <Button variant="ghost" onClick={() => handleNavigate("/pro-leads")} className="w-full md:w-auto justify-start md:justify-center">
+          <Button variant="ghost" onClick={() => handleNavigate("/leads")} className="w-full md:w-auto justify-start md:justify-center">
             Leads
           </Button>
-          <Button variant="ghost" onClick={() => handleNavigate("/supplier-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
+          <Button variant="ghost" onClick={() => handleNavigate("/pro-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
             Dashboard
           </Button>
+          <Button variant="ghost" onClick={() => handleNavigate("/buy-credits")} className="w-full md:w-auto justify-start md:justify-center">
+            Buy Credits
+          </Button>
         </>
+      )}
+      {user && (
+        <Button variant="ghost" onClick={() => handleNavigate("/messages")} className="w-full md:w-auto justify-start md:justify-center">
+          Messages
+        </Button>
       )}
       {user && !isSupplier && (
         <>
           <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full md:w-auto justify-start md:justify-center">
             My Projects
           </Button>
-          <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
+          <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full md:w-auto justify-start md:justify-center">
             Account
           </Button>
         </>

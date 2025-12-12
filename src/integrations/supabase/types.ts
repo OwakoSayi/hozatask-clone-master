@@ -113,6 +113,341 @@ export type Database = {
           },
         ]
       }
+      conversations: {
+        Row: {
+          created_at: string
+          customer_id: string
+          customer_unread_count: number | null
+          id: string
+          last_message_at: string | null
+          quote_id: string | null
+          request_id: string | null
+          supplier_id: string
+          supplier_unread_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          customer_unread_count?: number | null
+          id?: string
+          last_message_at?: string | null
+          quote_id?: string | null
+          request_id?: string | null
+          supplier_id: string
+          supplier_unread_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          customer_unread_count?: number | null
+          id?: string
+          last_message_at?: string | null
+          quote_id?: string | null
+          request_id?: string | null
+          supplier_id?: string
+          supplier_unread_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_guides: {
+        Row: {
+          avg_price_max: number
+          avg_price_min: number
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          price_factors: Json | null
+          tips: string[] | null
+          typical_duration: string | null
+          updated_at: string
+        }
+        Insert: {
+          avg_price_max: number
+          avg_price_min: number
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          price_factors?: Json | null
+          tips?: string[] | null
+          typical_duration?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avg_price_max?: number
+          avg_price_min?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          price_factors?: Json | null
+          tips?: string[] | null
+          typical_duration?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      credit_packages: {
+        Row: {
+          bonus_credits: number | null
+          created_at: string
+          credits: number
+          id: string
+          is_active: boolean | null
+          is_popular: boolean | null
+          name: string
+          price_cents: number
+        }
+        Insert: {
+          bonus_credits?: number | null
+          created_at?: string
+          credits: number
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name: string
+          price_cents: number
+        }
+        Update: {
+          bonus_credits?: number | null
+          created_at?: string
+          credits?: number
+          id?: string
+          is_active?: boolean | null
+          is_popular?: boolean | null
+          name?: string
+          price_cents?: number
+        }
+        Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          payment_reference: string | null
+          pro_account_id: string
+          quote_id: string | null
+          transaction_type: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_reference?: string | null
+          pro_account_id: string
+          quote_id?: string | null
+          transaction_type: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_reference?: string | null
+          pro_account_id?: string
+          quote_id?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_pro_account_id_fkey"
+            columns: ["pro_account_id"]
+            isOneToOne: false
+            referencedRelation: "pro_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_transactions_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instant_match_settings: {
+        Row: {
+          auto_quote_message: string | null
+          auto_quote_price_max: number | null
+          auto_quote_price_min: number | null
+          category: string
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          max_distance_km: number | null
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          auto_quote_message?: string | null
+          auto_quote_price_max?: number | null
+          auto_quote_price_min?: number | null
+          category: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          max_distance_km?: number | null
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          auto_quote_message?: string | null
+          auto_quote_price_max?: number | null
+          auto_quote_price_min?: number | null
+          category?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          max_distance_km?: number | null
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instant_match_settings_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instant_match_settings_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          sender_id: string
+          sender_type: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          sender_id: string
+          sender_type: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          sender_id?: string
+          sender_type?: string
+        }
+        Relationships: []
+      }
+      pro_accounts: {
+        Row: {
+          avg_response_time_hours: number | null
+          background_check_completed: boolean | null
+          created_at: string
+          credits: number
+          id: string
+          license_verified: boolean | null
+          response_rate: number | null
+          subscription_expires_at: string | null
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          supplier_id: string
+          total_hires: number | null
+          total_leads_purchased: number | null
+          updated_at: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+        }
+        Insert: {
+          avg_response_time_hours?: number | null
+          background_check_completed?: boolean | null
+          created_at?: string
+          credits?: number
+          id?: string
+          license_verified?: boolean | null
+          response_rate?: number | null
+          subscription_expires_at?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          supplier_id: string
+          total_hires?: number | null
+          total_leads_purchased?: number | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+        }
+        Update: {
+          avg_response_time_hours?: number | null
+          background_check_completed?: boolean | null
+          created_at?: string
+          credits?: number
+          id?: string
+          license_verified?: boolean | null
+          response_rate?: number | null
+          subscription_expires_at?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          supplier_id?: string
+          total_hires?: number | null
+          total_leads_purchased?: number | null
+          updated_at?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_accounts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: true
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pro_accounts_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: true
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string
@@ -157,6 +492,7 @@ export type Database = {
           created_at: string
           description: string
           id: string
+          lead_cost_credits: number | null
           location: string
           preferred_date: string | null
           preferred_time: string | null
@@ -173,6 +509,7 @@ export type Database = {
           created_at?: string
           description: string
           id?: string
+          lead_cost_credits?: number | null
           location: string
           preferred_date?: string | null
           preferred_time?: string | null
@@ -189,6 +526,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          lead_cost_credits?: number | null
           location?: string
           preferred_date?: string | null
           preferred_time?: string | null
@@ -203,6 +541,7 @@ export type Database = {
       quotes: {
         Row: {
           created_at: string
+          credits_spent: number | null
           estimated_duration: string | null
           id: string
           is_read: boolean | null
@@ -215,6 +554,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credits_spent?: number | null
           estimated_duration?: string | null
           id?: string
           is_read?: boolean | null
@@ -227,6 +567,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credits_spent?: number | null
           estimated_duration?: string | null
           id?: string
           is_read?: boolean | null
@@ -372,6 +713,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          leads_per_month: number | null
+          name: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_monthly: number
+        }
+        Insert: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          leads_per_month?: number | null
+          name: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_monthly: number
+        }
+        Update: {
+          created_at?: string
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          leads_per_month?: number | null
+          name?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price_cents_monthly?: number
+        }
+        Relationships: []
       }
       suppliers: {
         Row: {
@@ -529,7 +903,9 @@ export type Database = {
         | "Matched"
         | "Completed"
         | "Cancelled"
+      subscription_plan: "free" | "basic" | "pro" | "unlimited"
       supplier_status: "Pending" | "Active" | "Inactive"
+      verification_status: "none" | "pending" | "verified" | "top_pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -664,7 +1040,9 @@ export const Constants = {
         "Completed",
         "Cancelled",
       ],
+      subscription_plan: ["free", "basic", "pro", "unlimited"],
       supplier_status: ["Pending", "Active", "Inactive"],
+      verification_status: ["none", "pending", "verified", "top_pro"],
     },
   },
 } as const
