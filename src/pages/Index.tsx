@@ -1,167 +1,357 @@
-import { useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { CATEGORIES } from "@/config/categories";
-import { Search, MessageSquare, Users, CheckCircle, Star, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { CATEGORIES, CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
+import { Search, MapPin, Shield, Clock, CheckCircle, ChevronRight, Star } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-// Featured categories to display on homepage
-const featuredCategories = [
-  "Event Planning",
-  "Gardening & Landscaping",
-  "House Cleaning",
-  "Handyman Services",
-  "Moving & Delivery",
-  "Makeup Artists",
-  "Photography",
-  "Catering",
-  "Plumbing",
-  "Electrical Work",
-  "Furniture Assembly",
-  "Painting & Decorating",
+const popularServices = [
+  { name: "House Cleaning", slug: "house-cleaning" },
+  { name: "Handyman Services", slug: "handyman" },
+  { name: "Moving & Delivery", slug: "moving" },
+  { name: "Plumbing", slug: "plumbing" },
+  { name: "Electrical Work", slug: "electrical" },
+  { name: "Painting & Decorating", slug: "painting" },
+  { name: "Furniture Assembly", slug: "furniture-assembly" },
+  { name: "Gardening & Landscaping", slug: "gardening-landscaping" },
 ];
+
+const quickLinks = [
+  { name: "House Cleaning", category: "House Cleaning" },
+  { name: "Carpet Cleaning", category: "Carpet Cleaning" },
+  { name: "Junk Removal", category: "Junk Removal" },
+  { name: "Pressure Washing", category: "Pressure Washing" },
+];
+
+const projectTabs = [
+  { id: "home-maintenance", label: "Home Maintenance" },
+  { id: "home-remodeling", label: "Home Remodeling" },
+  { id: "outdoor-upkeep", label: "Outdoor Upkeep" },
+  { id: "essential-services", label: "Essential Home Services" },
+];
+
+const tabContent: Record<string, { title: string; description: string; services: string[] }> = {
+  "home-maintenance": {
+    title: "These annoying chores used to eat up your entire weekend. Not anymore.",
+    description: "See all home maintenance projects.",
+    services: ["House Cleaning", "Handyman Services", "Painting & Decorating"],
+  },
+  "home-remodeling": {
+    title: "Transform your space with professional help.",
+    description: "See all home remodeling projects.",
+    services: ["Carpentry", "Flooring", "Roofing"],
+  },
+  "outdoor-upkeep": {
+    title: "Keep your outdoor spaces pristine year-round.",
+    description: "See all outdoor projects.",
+    services: ["Gardening & Landscaping", "Lawn Care & Mowing", "Pool Maintenance"],
+  },
+  "essential-services": {
+    title: "Essential services to keep your home running smoothly.",
+    description: "See all essential services.",
+    services: ["Plumbing", "Electrical Work", "HVAC Services"],
+  },
+};
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [location, setLocation] = useState("");
 
-  useEffect(() => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-
-    if (params.get("type") === "recovery") {
-      window.location.hash = "/reset-password";
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/post-project?search=${encodeURIComponent(searchQuery)}`);
     }
-  }, []);
+  };
 
-  const displayCategories = CATEGORIES.filter((cat) => featuredCategories.includes(cat.name));
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
       {/* Hero Section - Thumbtack style */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-16 md:py-24 px-4">
-        <div className="container mx-auto text-center max-w-4xl">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 text-foreground">
-            Find the right pro for your project
+      <section className="pt-16 pb-8 px-4 bg-background">
+        <div className="container mx-auto text-center max-w-3xl">
+          {/* Logo Icon */}
+          <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-primary-foreground text-2xl font-bold">H</span>
+          </div>
+          
+          {/* Rotating Headline */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-8 leading-tight">
+            Home improvement,<br />
+            <span className="text-primary">made easy.</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-            Tell us what you need. Get free quotes from local professionals.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={() => navigate("/post-project")}
-              className="text-lg px-8 py-6"
-            >
-              <MessageSquare className="mr-2 h-5 w-5" />
-              Get Free Quotes
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/suppliers")}
-              className="text-lg px-8 py-6"
-            >
-              <Search className="mr-2 h-5 w-5" />
-              Browse Pros
+
+          {/* Search Bar - Thumbtack style */}
+          <div className="flex flex-col md:flex-row gap-3 max-w-2xl mx-auto bg-background border border-border rounded-lg p-2 shadow-lg">
+            <div className="flex-1 flex items-center gap-2 px-3">
+              <Search className="h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Describe your project or problem — be as detailed as you'd like."
+                className="border-0 shadow-none focus-visible:ring-0 text-base"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+            </div>
+            <div className="flex items-center gap-2 px-3 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Location"
+                className="border-0 shadow-none focus-visible:ring-0 w-32"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleSearch} size="lg" className="px-8">
+              Search
             </Button>
           </div>
         </div>
       </section>
 
-      {/* How It Works - Thumbtack style */}
-      <section className="py-16 px-4 bg-muted/30">
+      {/* Hero Image - Thumbtack style */}
+      <section className="pb-16 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="relative mx-auto">
+            <div className="aspect-video bg-gradient-to-b from-primary/5 to-transparent rounded-full overflow-hidden flex items-end justify-center">
+              <img 
+                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop"
+                alt="Beautiful home"
+                className="w-full max-w-lg rounded-t-2xl shadow-xl"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pros for every project */}
+      <section className="py-12 px-4 bg-muted/30">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">1. Tell us what you need</h3>
-              <p className="text-muted-foreground">
-                Answer a few questions about your project. It only takes a minute.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">2. Get free quotes</h3>
-              <p className="text-muted-foreground">
-                Local pros will review your request and send personalized quotes.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2 text-foreground">3. Hire the best</h3>
-              <p className="text-muted-foreground">
-                Compare quotes, read reviews, and hire when you're ready.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section id="categories" className="py-16 px-4">
-        <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 text-foreground">
-            Popular Services
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">
+            Pros for every project
           </h2>
-          <p className="text-center text-muted-foreground mb-12">
-            Browse by category or post a project to get quotes
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {displayCategories.map((category) => (
-              <Card
-                key={category.slug}
-                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 border-border group"
-                onClick={() => navigate(`/post-project?category=${encodeURIComponent(category.name)}`)}
+          <p className="text-center text-muted-foreground mb-8">in your area</p>
+          
+          {/* Service Pills - Scrollable */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
+            {popularServices.map((service) => (
+              <Button
+                key={service.slug}
+                variant="outline"
+                className="rounded-full bg-background hover:bg-primary hover:text-primary-foreground transition-all"
+                onClick={() => navigate(`/post-project?category=${encodeURIComponent(service.name)}`)}
               >
-                <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-                  <div className="text-5xl mb-3">{category.icon}</div>
-                  <h3 className="font-semibold text-foreground">{category.name}</h3>
-                  <p className="text-xs text-muted-foreground mt-1 group-hover:text-primary transition-colors">
-                    Get quotes →
-                  </p>
-                </CardContent>
-              </Card>
+                {service.name}
+              </Button>
             ))}
           </div>
-          <div className="text-center mt-8 flex gap-4 justify-center">
-            <Button variant="outline" size="lg" onClick={() => navigate("/post-project")}>
-              Post a Project
-            </Button>
-            <Button size="lg" onClick={() => navigate("/suppliers")}>
-              Browse All Pros
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+
+          {/* Quick Links */}
+          <div className="flex flex-wrap justify-center gap-4">
+            {quickLinks.map((link) => (
+              <Button
+                key={link.name}
+                variant="link"
+                className="text-primary underline"
+                onClick={() => navigate(`/post-project?category=${encodeURIComponent(link.category)}`)}
+              >
+                {link.name}
+              </Button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why customers love us */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
+            Why customers love HozaTask.
+          </h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Every day, thousands of customers like you rely on HozaTask to care for their homes—and we've got your back if things don't go as planned.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Get to a hire faster.</h3>
+              <p className="text-muted-foreground text-sm">
+                Share details about your project in your own words, so we can find your best fit.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Only see local, trusted pros.</h3>
+              <p className="text-muted-foreground text-sm">
+                We'll only show you pros we're confident can do the job.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="font-semibold text-lg mb-2">A job done right—guaranteed.</h3>
+              <p className="text-muted-foreground text-sm">
+                If the job isn't done as agreed, we'll help make it right.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Explore more projects - Tabs */}
+      <section className="py-16 px-4 bg-muted/30">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8">
+            Explore more projects.
+          </h2>
+
+          <Tabs defaultValue="home-maintenance" className="w-full">
+            <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full max-w-2xl mx-auto mb-8 h-auto">
+              {projectTabs.map((tab) => (
+                <TabsTrigger 
+                  key={tab.id} 
+                  value={tab.id}
+                  className="text-xs md:text-sm py-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {projectTabs.map((tab) => (
+              <TabsContent key={tab.id} value={tab.id}>
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-8">
+                    <div className="grid md:grid-cols-2 gap-8">
+                      <div>
+                        <p className="text-lg mb-4">{tabContent[tab.id].title}</p>
+                        <Button 
+                          variant="link" 
+                          className="text-primary p-0"
+                          onClick={() => navigate("/post-project")}
+                        >
+                          {tabContent[tab.id].description}
+                          <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-3">
+                        {tabContent[tab.id].services.map((service) => (
+                          <Button
+                            key={service}
+                            variant="outline"
+                            className="rounded-full"
+                            onClick={() => navigate(`/post-project?category=${encodeURIComponent(service)}`)}
+                          >
+                            {service}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </div>
+      </section>
+
+      {/* Resources for your home */}
+      <section className="py-16 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">
+            Resources for your home.
+          </h2>
+          <p className="text-center text-muted-foreground mb-12">
+            Sometimes getting started is the hardest part. We've got expert guidance for your next project.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all group"
+              onClick={() => navigate("/cost-guides")}
+            >
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <span className="text-2xl">💰</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Cost guides</h3>
+                <p className="text-muted-foreground text-sm">
+                  Estimate costs for all your home projects.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all group"
+              onClick={() => navigate("/post-project")}
+            >
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <span className="text-2xl">🔧</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Maintenance tips</h3>
+                <p className="text-muted-foreground text-sm">
+                  Tips to keep your home in great shape all year long.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer hover:shadow-lg transition-all group"
+              onClick={() => navigate("/post-project")}
+            >
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                  <span className="text-2xl">📖</span>
+                </div>
+                <h3 className="font-semibold text-lg mb-2">Project guides</h3>
+                <p className="text-muted-foreground text-sm">
+                  How-to guides for DIY and hiring pros.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 px-4 bg-primary text-primary-foreground">
+      <section className="py-16 px-4 bg-secondary text-secondary-foreground">
         <div className="container mx-auto max-w-4xl">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-12">
+            Trusted pros, everywhere you need them.
+          </h2>
           <div className="grid grid-cols-3 gap-8 text-center">
             <div>
-              <p className="text-3xl md:text-4xl font-bold">500+</p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">500+</p>
               <p className="text-sm opacity-80">Verified Pros</p>
             </div>
             <div>
-              <p className="text-3xl md:text-4xl font-bold">10K+</p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">10K+</p>
               <p className="text-sm opacity-80">Projects Completed</p>
             </div>
             <div className="flex flex-col items-center">
               <div className="flex items-center gap-1">
-                <p className="text-3xl md:text-4xl font-bold">4.8</p>
-                <Star className="h-6 w-6 fill-current" />
+                <p className="text-3xl md:text-4xl font-bold text-primary">4.8</p>
+                <Star className="h-6 w-6 text-primary fill-primary" />
               </div>
               <p className="text-sm opacity-80">Average Rating</p>
             </div>
@@ -169,18 +359,20 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* App Download CTA - Thumbtack style */}
       <section className="py-16 px-4">
-        <div className="container mx-auto text-center max-w-2xl">
-          <h2 className="text-3xl font-bold mb-4 text-foreground">Ready to get started?</h2>
-          <p className="text-muted-foreground mb-8">
-            Post your project for free and start receiving quotes from top-rated pros in your area.
+        <div className="container mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            The one app you need to get<br />everything done.
+          </h2>
+          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+            From custom guides made just for you to effortless project planning, it's all here — in one free app.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center gap-4">
             <Button size="lg" onClick={() => navigate("/post-project")}>
-              Post a Project - It's Free
+              Get Started Free
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/supplier-submission")}>
+            <Button size="lg" variant="outline" onClick={() => navigate("/become-pro")}>
               Join as a Pro
             </Button>
           </div>
