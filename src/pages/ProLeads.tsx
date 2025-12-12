@@ -12,7 +12,7 @@ import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, DollarSign, Send, MessageSquare, Clock } from "lucide-react";
+import { Calendar, MapPin, DollarSign, Send, MessageSquare, Clock, Zap, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface ProjectRequest {
@@ -26,6 +26,7 @@ interface ProjectRequest {
   budget_max: number | null;
   status: string;
   created_at: string;
+  lead_cost_credits: number | null;
 }
 
 interface SentQuote {
@@ -45,6 +46,8 @@ const ProLeads = () => {
   const [loading, setLoading] = useState(true);
   const [supplierId, setSupplierId] = useState<string | null>(null);
   const [supplierCategory, setSupplierCategory] = useState<string | null>(null);
+  const [proAccountId, setProAccountId] = useState<string | null>(null);
+  const [credits, setCredits] = useState<number>(0);
 
   // Quote form state
   const [selectedLead, setSelectedLead] = useState<ProjectRequest | null>(null);
@@ -61,7 +64,7 @@ const ProLeads = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate("/auth", { state: { returnTo: "/pro-leads" } });
+        navigate("/auth", { state: { returnTo: "/leads" } });
         return;
       }
 
@@ -80,12 +83,24 @@ const ProLeads = () => {
           description: "You need to be an approved pro to view leads",
           variant: "destructive",
         });
-        navigate("/supplier-dashboard");
+        navigate("/pro-dashboard");
         return;
       }
 
       setSupplierId(supplier.id);
       setSupplierCategory(supplier.category);
+
+      // Load pro account for credits
+      const { data: proAccount } = await supabase
+        .from("pro_accounts")
+        .select("id, credits")
+        .eq("supplier_id", supplier.id)
+        .maybeSingle();
+
+      if (proAccount) {
+        setProAccountId(proAccount.id);
+        setCredits(proAccount.credits);
+      }
 
       await Promise.all([
         loadLeads(supplier.category, supplier.id),
@@ -141,23 +156,57 @@ const ProLeads = () => {
   };
 
   const handleSendQuote = async () => {
-    if (!selectedLead || !quotePrice || !quoteMessage || !supplierId) return;
+    if (!selectedLead || !quotePrice || !quoteMessage || !supplierId || !proAccountId) return;
+
+    const leadCost = selectedLead.lead_cost_credits || 1;
+
+    // Check if user has enough credits
+    if (credits < leadCost) {
+      toast({
+        title: "Insufficient Credits",
+        description: `You need ${leadCost} credit(s) to send this quote. You have ${credits}.`,
+        variant: "destructive",
+      });
+      navigate("/buy-credits");
+      return;
+    }
 
     setSubmitting(true);
     try {
+      // Deduct credits first
+      const { error: creditError } = await supabase
+        .from("pro_accounts")
+        .update({ credits: credits - leadCost })
+        .eq("id", proAccountId);
+
+      if (creditError) throw creditError;
+
+      // Insert quote with credits spent
       const { error } = await supabase.from("quotes").insert({
         request_id: selectedLead.id,
         supplier_id: supplierId,
         price: parseFloat(quotePrice),
         message: quoteMessage,
         estimated_duration: quoteDuration || null,
+        credits_spent: leadCost,
       });
 
       if (error) throw error;
 
+      // Record the transaction
+      await supabase.from("credit_transactions").insert({
+        pro_account_id: proAccountId,
+        amount: -leadCost,
+        transaction_type: "quote",
+        description: `Quote sent for: ${selectedLead.title}`,
+      });
+
+      // Update local credits state
+      setCredits(credits - leadCost);
+
       toast({
         title: "Quote Sent!",
-        description: "The customer will be notified of your quote",
+        description: `${leadCost} credit(s) used. The customer will be notified of your quote.`,
       });
 
       setSelectedLead(null);
@@ -206,11 +255,22 @@ const ProLeads = () => {
       <Header />
       
       <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Leads & Quotes</h1>
-          <p className="text-muted-foreground">
-            View customer requests in your category and send quotes
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Leads & Quotes</h1>
+            <p className="text-muted-foreground">
+              View customer requests in your category and send quotes
+            </p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full">
+              <Zap className="h-4 w-4" />
+              <span className="font-semibold">{credits} credits</span>
+            </div>
+            <Button variant="outline" onClick={() => navigate("/buy-credits")}>
+              Buy Credits
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="leads">
@@ -269,10 +329,16 @@ const ProLeads = () => {
                             </span>
                           </div>
                         </div>
-                        <Button onClick={() => setSelectedLead(lead)}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Send Quote
-                        </Button>
+                        <div className="flex flex-col items-end gap-2">
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <Zap className="h-3 w-3" />
+                            {lead.lead_cost_credits || 1} credit
+                          </Badge>
+                          <Button onClick={() => setSelectedLead(lead)}>
+                            <Send className="h-4 w-4 mr-2" />
+                            Send Quote
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -343,6 +409,37 @@ const ProLeads = () => {
           </DialogHeader>
           
           <div className="space-y-4">
+            {/* Credit cost warning */}
+            <div className={`p-4 rounded-lg flex items-start gap-3 ${
+              credits >= (selectedLead?.lead_cost_credits || 1) 
+                ? 'bg-primary/10' 
+                : 'bg-destructive/10'
+            }`}>
+              {credits >= (selectedLead?.lead_cost_credits || 1) ? (
+                <Zap className="h-5 w-5 text-primary mt-0.5" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+              )}
+              <div>
+                <p className="font-medium">
+                  {selectedLead?.lead_cost_credits || 1} credit required to send this quote
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  You have {credits} credits available
+                </p>
+                {credits < (selectedLead?.lead_cost_credits || 1) && (
+                  <Button 
+                    size="sm" 
+                    variant="link" 
+                    className="px-0 h-auto"
+                    onClick={() => navigate("/buy-credits")}
+                  >
+                    Buy more credits
+                  </Button>
+                )}
+              </div>
+            </div>
+
             <div className="bg-muted/50 p-4 rounded-lg">
               <h4 className="font-medium mb-2">Project Details</h4>
               <p className="text-sm text-muted-foreground">{selectedLead?.description}</p>
@@ -396,9 +493,9 @@ const ProLeads = () => {
             </Button>
             <Button 
               onClick={handleSendQuote} 
-              disabled={!quotePrice || !quoteMessage || submitting}
+              disabled={!quotePrice || !quoteMessage || submitting || credits < (selectedLead?.lead_cost_credits || 1)}
             >
-              {submitting ? "Sending..." : "Send Quote"}
+              {submitting ? "Sending..." : `Send Quote (${selectedLead?.lead_cost_credits || 1} credit)`}
             </Button>
           </DialogFooter>
         </DialogContent>
