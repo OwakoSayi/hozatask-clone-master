@@ -1,13 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, Search, Users } from "lucide-react";
+import { Star, MapPin, Search, Users, Navigation, Loader2, SlidersHorizontal } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,7 +15,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ProCard } from "@/components/ProCard";
-import { getPopularCategories, CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
+import { ProSearchAutocomplete } from "@/components/ProSearchAutocomplete";
+import { getPopularCategories } from "@/config/categories";
+import { useGeolocation, getLocationCoords } from "@/hooks/useGeolocation";
+import { useToast } from "@/hooks/use-toast";
 
 interface Supplier {
   id: string;
@@ -32,17 +34,24 @@ interface Supplier {
 interface SupplierWithRating extends Supplier {
   averageRating: number;
   reviewCount: number;
+  distance?: number;
 }
 
 const SupplierDirectory = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState<SupplierWithRating[]>([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState<SupplierWithRating[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get("category") || "all");
+  const [serviceSearch, setServiceSearch] = useState(searchParams.get("category") || "");
+  const [locationSearch, setLocationSearch] = useState(searchParams.get("location") || "");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("distance");
+  const [maxDistance, setMaxDistance] = useState<number>(50);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const { latitude, longitude, cityName, loading: geoLoading, error: geoError, requestLocation, calculateDistance } = useGeolocation();
 
   const popularCategories = getPopularCategories();
 
@@ -52,27 +61,39 @@ const SupplierDirectory = () => {
 
   useEffect(() => {
     const categoryParam = searchParams.get("category");
+    const locationParam = searchParams.get("location");
     if (categoryParam) {
-      setCategoryFilter(categoryParam);
+      setServiceSearch(categoryParam);
+    }
+    if (locationParam) {
+      setLocationSearch(locationParam);
     }
   }, [searchParams]);
 
   useEffect(() => {
     filterSuppliers();
-  }, [suppliers, searchTerm, categoryFilter]);
+  }, [suppliers, serviceSearch, locationSearch, categoryFilter, latitude, longitude, sortBy, maxDistance]);
 
-  const handleCategoryChange = (value: string) => {
-    setCategoryFilter(value);
-    if (value === "all") {
-      setSearchParams({});
-    } else {
-      setSearchParams({ category: value });
+  // Auto-request location on page load if not already available
+  useEffect(() => {
+    if (!latitude && !longitude && !geoLoading && !geoError) {
+      // Request location after a short delay to let page load
+      const timer = setTimeout(() => {
+        requestLocation();
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, []);
+
+  // Set location search to city name when geolocation is detected
+  useEffect(() => {
+    if (cityName && !locationSearch) {
+      setLocationSearch(cityName);
+    }
+  }, [cityName]);
 
   const loadSuppliers = async () => {
     try {
-      // Load all active suppliers
       const { data: suppliersData, error: suppliersError } = await supabase
         .from("suppliers")
         .select("*")
@@ -80,14 +101,12 @@ const SupplierDirectory = () => {
 
       if (suppliersError) throw suppliersError;
 
-      // Load all reviews
       const { data: reviewsData, error: reviewsError } = await supabase
         .from("reviews")
         .select("supplier_id, rating");
 
       if (reviewsError) throw reviewsError;
 
-      // Calculate ratings for each supplier
       const suppliersWithRatings: SupplierWithRating[] = (suppliersData || []).map((supplier) => {
         const supplierReviews = reviewsData?.filter((r) => r.supplier_id === supplier.id) || [];
         const averageRating = supplierReviews.length > 0
@@ -103,7 +122,6 @@ const SupplierDirectory = () => {
 
       setSuppliers(suppliersWithRatings);
 
-      // Extract unique categories
       const uniqueCategories = Array.from(
         new Set(suppliersData?.map((s) => s.category) || [])
       );
@@ -116,28 +134,100 @@ const SupplierDirectory = () => {
   };
 
   const filterSuppliers = () => {
-    let filtered = suppliers;
+    let filtered = suppliers.map(supplier => {
+      // Calculate distance if user location is available
+      let distance: number | undefined;
+      
+      if (latitude && longitude && supplier.location) {
+        const supplierCoords = getLocationCoords(supplier.location);
+        if (supplierCoords) {
+          distance = calculateDistance(latitude, longitude, supplierCoords.lat, supplierCoords.lon);
+        }
+      }
+      
+      return { ...supplier, distance };
+    });
 
-    if (searchTerm) {
+    // Filter by service/category search
+    if (serviceSearch) {
+      const searchLower = serviceSearch.toLowerCase();
       filtered = filtered.filter(
         (s) =>
-          s.business_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.description?.toLowerCase().includes(searchTerm.toLowerCase())
+          s.business_name.toLowerCase().includes(searchLower) ||
+          s.title.toLowerCase().includes(searchLower) ||
+          s.category.toLowerCase().includes(searchLower) ||
+          s.description?.toLowerCase().includes(searchLower)
       );
     }
 
+    // Filter by location search
+    if (locationSearch) {
+      const searchLower = locationSearch.toLowerCase();
+      filtered = filtered.filter(
+        (s) => s.location?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Filter by category dropdown
     if (categoryFilter !== "all") {
       filtered = filtered.filter((s) => s.category === categoryFilter);
+    }
+
+    // Filter by max distance if user location is available
+    if (latitude && longitude && sortBy === "distance") {
+      filtered = filtered.filter(s => s.distance !== undefined && s.distance <= maxDistance);
+    }
+
+    // Sort suppliers
+    switch (sortBy) {
+      case "distance":
+        filtered.sort((a, b) => {
+          if (a.distance === undefined) return 1;
+          if (b.distance === undefined) return -1;
+          return a.distance - b.distance;
+        });
+        break;
+      case "rating":
+        filtered.sort((a, b) => b.averageRating - a.averageRating);
+        break;
+      case "reviews":
+        filtered.sort((a, b) => b.reviewCount - a.reviewCount);
+        break;
+      case "price-low":
+        filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
+        break;
+      case "price-high":
+        filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
+        break;
     }
 
     setFilteredSuppliers(filtered);
   };
 
+  const handleSearch = () => {
+    const params: Record<string, string> = {};
+    if (serviceSearch) params.category = serviceSearch;
+    if (locationSearch) params.location = locationSearch;
+    setSearchParams(params);
+    filterSuppliers();
+  };
+
+  const handleCategoryClick = (category: string) => {
+    setServiceSearch(category);
+    setSearchParams({ category });
+  };
+
+  const clearFilters = () => {
+    setServiceSearch("");
+    setLocationSearch("");
+    setCategoryFilter("all");
+    setSearchParams({});
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading suppliers...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -146,48 +236,63 @@ const SupplierDirectory = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      {/* Hero Section */}
-      <section className="bg-primary/5 py-12 px-4">
-        <div className="container mx-auto max-w-4xl text-center">
+      {/* Hero Section with Search */}
+      <section className="bg-primary/5 py-8 md:py-12 px-4">
+        <div className="container mx-auto max-w-5xl text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Users className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-4">
-            {categoryFilter !== "all" ? `${categoryFilter} Professionals` : "Find Trusted Professionals"}
+          <h1 className="text-2xl md:text-4xl font-bold mb-4">
+            {serviceSearch ? `${serviceSearch} Professionals` : "Find Trusted Professionals Near You"}
           </h1>
           <p className="text-muted-foreground mb-6">
-            Browse verified pros ready to help with your project
+            {latitude && cityName ? (
+              <span className="flex items-center justify-center gap-2">
+                <MapPin className="h-4 w-4 text-primary" />
+                Showing pros near {cityName}
+              </span>
+            ) : (
+              "Browse verified pros ready to help with your project"
+            )}
           </p>
           
           {/* Search Bar */}
-          <div className="flex flex-col md:flex-row gap-3 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search professionals..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={categoryFilter} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="md:w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="max-w-4xl mx-auto">
+            <ProSearchAutocomplete
+              serviceValue={serviceSearch}
+              locationValue={locationSearch}
+              onServiceChange={setServiceSearch}
+              onLocationChange={setLocationSearch}
+              onSearch={handleSearch}
+            />
           </div>
+
+          {/* Location Status */}
+          {!latitude && !geoLoading && (
+            <div className="mt-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={requestLocation}
+                className="gap-2"
+              >
+                <Navigation className="h-4 w-4" />
+                Enable location to find nearby pros
+              </Button>
+            </div>
+          )}
+          {geoLoading && (
+            <div className="mt-4 text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Getting your location...
+            </div>
+          )}
         </div>
       </section>
 
       {/* Popular Categories */}
-      {categoryFilter === "all" && (
-        <section className="py-6 px-4 border-b">
+      {!serviceSearch && (
+        <section className="py-4 md:py-6 px-4 border-b">
           <div className="container mx-auto">
             <div className="flex flex-wrap gap-2 justify-center">
               {popularCategories.slice(0, 8).map((category) => (
@@ -195,8 +300,8 @@ const SupplierDirectory = () => {
                   key={category.slug}
                   variant="outline"
                   size="sm"
-                  className="rounded-full"
-                  onClick={() => handleCategoryChange(category.name)}
+                  className="rounded-full text-xs md:text-sm"
+                  onClick={() => handleCategoryClick(category.name)}
                 >
                   <span className="mr-1">{category.icon}</span>
                   {category.name}
@@ -207,29 +312,76 @@ const SupplierDirectory = () => {
         </section>
       )}
 
-      <div className="container mx-auto px-4 py-8 flex-1">
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-muted-foreground">
-            {filteredSuppliers.length} professional{filteredSuppliers.length !== 1 ? "s" : ""} found
-          </p>
-          {categoryFilter !== "all" && (
-            <Button variant="ghost" size="sm" onClick={() => handleCategoryChange("all")}>
-              Clear filter
-            </Button>
-          )}
+      <div className="container mx-auto px-4 py-6 md:py-8 flex-1">
+        {/* Filters and Sort */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-muted-foreground text-sm">
+              {filteredSuppliers.length} professional{filteredSuppliers.length !== 1 ? "s" : ""} found
+            </p>
+            {(serviceSearch || locationSearch) && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs">
+                Clear filters
+              </Button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            <SlidersHorizontal className="h-4 w-4 text-muted-foreground" />
+            
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[140px] h-9 text-sm">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="distance">Nearest</SelectItem>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="reviews">Most Reviews</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {latitude && longitude && (
+              <Select value={maxDistance.toString()} onValueChange={(v) => setMaxDistance(parseInt(v))}>
+                <SelectTrigger className="w-[120px] h-9 text-sm">
+                  <SelectValue placeholder="Distance" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">Within 10km</SelectItem>
+                  <SelectItem value="25">Within 25km</SelectItem>
+                  <SelectItem value="50">Within 50km</SelectItem>
+                  <SelectItem value="100">Within 100km</SelectItem>
+                  <SelectItem value="500">Within 500km</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[150px] h-9 text-sm">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {filteredSuppliers.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <p className="text-muted-foreground mb-4">No professionals found matching your criteria</p>
-              <Button variant="outline" onClick={() => { setSearchTerm(""); handleCategoryChange("all"); }}>
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
             {filteredSuppliers.map((supplier) => (
               <ProCard
                 key={supplier.id}
@@ -243,6 +395,7 @@ const SupplierDirectory = () => {
                 price={supplier.price}
                 averageRating={supplier.averageRating}
                 reviewCount={supplier.reviewCount}
+                distance={supplier.distance}
                 onClick={() => navigate(`/supplier/${supplier.id}`)}
               />
             ))}

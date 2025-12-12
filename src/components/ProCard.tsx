@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin, CheckCircle } from "lucide-react";
+import { Star, MapPin, CheckCircle, Navigation } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ProCardProps {
@@ -14,6 +14,7 @@ interface ProCardProps {
   price?: number;
   averageRating: number;
   reviewCount: number;
+  distance?: number;
   onClick?: () => void;
   compact?: boolean;
 }
@@ -28,6 +29,7 @@ export const ProCard = ({
   price,
   averageRating,
   reviewCount,
+  distance,
   onClick,
   compact = false,
 }: ProCardProps) => {
@@ -120,9 +122,17 @@ export const ProCard = ({
             <MapPin className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
             <span className="truncate">{location}</span>
           </span>
-          {price && (
-            <span className="font-semibold shrink-0 ml-1">R{price}</span>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {distance !== undefined && (
+              <span className="text-xs text-primary flex items-center gap-1">
+                <Navigation className="h-3 w-3" />
+                {distance < 1 ? `${(distance * 1000).toFixed(0)}m` : `${distance.toFixed(1)}km`}
+              </span>
+            )}
+            {price && (
+              <span className="font-semibold ml-1">R{price}</span>
+            )}
+          </div>
         </div>
         
         {reviewCount > 0 && (
