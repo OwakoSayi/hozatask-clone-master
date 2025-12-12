@@ -25,6 +25,17 @@ import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
 import CustomerAccount from "./pages/CustomerAccount";
 
+// Footer pages
+import About from "./pages/About";
+import Careers from "./pages/Careers";
+import Press from "./pages/Press";
+import Blog from "./pages/Blog";
+import Help from "./pages/Help";
+import Safety from "./pages/Safety";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Guarantee from "./pages/Guarantee";
+
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +56,7 @@ const App = () => (
           <Route path="/pros" element={<SupplierDirectory />} />
           <Route path="/pros/:category" element={<SupplierDirectory />} />
           <Route path="/pro/:id" element={<SupplierProfile />} />
+          <Route path="/supplier/:id" element={<SupplierProfile />} />
           
           {/* Customer flow - Get quotes */}
           <Route path="/post-project" element={<PostProject />} />
@@ -72,6 +84,17 @@ const App = () => (
           
           {/* Account */}
           <Route path="/account" element={<CustomerAccount />} />
+          
+          {/* Footer pages */}
+          <Route path="/about" element={<About />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/press" element={<Press />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/safety" element={<Safety />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/guarantee" element={<Guarantee />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

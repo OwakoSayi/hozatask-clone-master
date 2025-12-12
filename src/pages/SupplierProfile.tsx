@@ -3,12 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import {
   Star,
@@ -22,6 +22,9 @@ import {
   Share2,
   Copy,
   Check,
+  Users,
+  Calendar,
+  Briefcase,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -69,13 +72,9 @@ const ShareProfileButton = ({ supplierId, businessName }: { supplierId: string; 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `${businessName} - TaskConnect`,
+          title: `${businessName} - HozaTask`,
           text: shareText,
           url: profileUrl,
-        });
-        toast({
-          title: "Shared successfully!",
-          description: "Thanks for spreading the word",
         });
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
@@ -91,24 +90,17 @@ const ShareProfileButton = ({ supplierId, businessName }: { supplierId: string; 
     try {
       await navigator.clipboard.writeText(`${shareText}\n${profileUrl}`);
       setCopied(true);
-      toast({
-        title: "Link copied!",
-        description: "Profile link copied to clipboard",
-      });
+      toast({ title: "Link copied!", description: "Profile link copied to clipboard" });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      toast({
-        title: "Failed to copy",
-        description: "Please copy the URL manually",
-        variant: "destructive",
-      });
+      toast({ title: "Failed to copy", variant: "destructive" });
     }
   };
 
   return (
-    <Button variant="outline" onClick={handleShare} className="gap-2">
-      {copied ? <Check className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-      Share Profile
+    <Button variant="outline" onClick={handleShare} size="sm">
+      {copied ? <Check className="h-4 w-4 mr-2" /> : <Share2 className="h-4 w-4 mr-2" />}
+      Share
     </Button>
   );
 };
@@ -124,6 +116,7 @@ const SupplierProfile = () => {
   const [averageRating, setAverageRating] = useState(0);
   const [completedJobs, setCompletedJobs] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceOption | null>(null);
+  const [activeTab, setActiveTab] = useState("about");
 
   useEffect(() => {
     loadSupplierData();
@@ -141,22 +134,20 @@ const SupplierProfile = () => {
       if (supplierError) throw supplierError;
       setSupplier(supplierData);
 
-      const { data: optionsData, error: optionsError } = await supabase
+      const { data: optionsData } = await supabase
         .from("service_options")
         .select("*")
         .eq("supplier_id", id)
         .eq("is_active", true);
 
-      if (optionsError) throw optionsError;
       setServiceOptions(optionsData || []);
 
-      const { data: reviewsData, error: reviewsError } = await supabase
+      const { data: reviewsData } = await supabase
         .from("reviews")
         .select("*")
         .eq("supplier_id", id)
         .order("created_at", { ascending: false });
 
-      if (reviewsError) throw reviewsError;
       setReviews(reviewsData || []);
 
       if (reviewsData && reviewsData.length > 0) {
@@ -173,31 +164,29 @@ const SupplierProfile = () => {
       setCompletedJobs(count || 0);
     } catch (error) {
       console.error("Error loading supplier data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load supplier profile",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to load supplier profile", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
   const handleServiceSelect = async (serviceId: string) => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      toast({
-        title: "Authentication Required",
-        description: "Please login to book this service",
-      });
+      toast({ title: "Authentication Required", description: "Please login to book this service" });
       navigate("/auth", { state: { returnTo: "/booking", selectedIds: [serviceId] } });
       return;
     }
 
     navigate("/booking", { state: { selectedIds: [serviceId] } });
+  };
+
+  const getRatingLabel = (rating: number) => {
+    if (rating >= 4.5) return "Excellent";
+    if (rating >= 4.0) return "Very good";
+    if (rating >= 3.5) return "Good";
+    return "Fair";
   };
 
   if (loading) {
@@ -215,24 +204,12 @@ const SupplierProfile = () => {
         <div className="flex-1 flex items-center justify-center">
           <Card className="max-w-md w-full mx-4">
             <CardContent className="py-12 text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Award className="h-8 w-8 text-primary" />
-              </div>
-              <h2 className="text-xl font-semibold mb-2">Sign Up to View Supplier Details</h2>
-              <p className="text-muted-foreground mb-6">
-                Create an account to access full supplier profiles, contact information, and book services.
-              </p>
-              <div className="space-y-3">
-                <Button onClick={() => navigate("/auth", { state: { returnTo: `/supplier/${id}` } })} className="w-full">
-                  Sign Up / Login
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/browse")} className="w-full">
-                  Browse Services
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-4">
-                Already have an account? Click Sign Up / Login above to access your account.
-              </p>
+              <Award className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Sign Up to View Details</h2>
+              <p className="text-muted-foreground mb-6">Create an account to access full supplier profiles.</p>
+              <Button onClick={() => navigate("/auth", { state: { returnTo: `/supplier/${id}` } })} className="w-full">
+                Sign Up / Login
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -243,372 +220,450 @@ const SupplierProfile = () => {
 
   const profileImage = supplier.images?.[0] || "/placeholder.svg";
   const initials = supplier.business_name.substring(0, 2).toUpperCase();
+  const allImages = [...(supplier.images || []), ...serviceOptions.flatMap(s => s.images || [])];
+
+  // Rating distribution
+  const ratingDistribution = [5, 4, 3, 2, 1].map(rating => ({
+    rating,
+    count: reviews.filter(r => r.rating === rating).length,
+    percentage: reviews.length > 0 ? (reviews.filter(r => r.rating === rating).length / reviews.length) * 100 : 0,
+  }));
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <div className="container mx-auto px-4 py-6 flex-1 max-w-6xl">
-        <div className="flex items-center justify-between mb-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <ShareProfileButton supplierId={id!} businessName={supplier?.business_name || ""} />
+      {/* Breadcrumb */}
+      <div className="border-b">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-2 text-sm">
+            <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-primary">
+              HozaTask
+            </button>
+            <span className="text-muted-foreground">›</span>
+            <button onClick={() => navigate(`/pros?category=${encodeURIComponent(supplier.category)}`)} className="text-muted-foreground hover:text-primary">
+              {supplier.category}
+            </button>
+            <span className="text-muted-foreground">›</span>
+            <span className="text-foreground">{supplier.business_name}</span>
+          </div>
         </div>
+      </div>
 
-        {/* Hero Section - TaskRabbit Style */}
-        <Card className="mb-6 border-border shadow-md">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-8">
-              {/* Profile Image & Quick Info */}
-              <div className="flex flex-col items-center md:items-start">
-                <Avatar className="h-32 w-32 border-4 border-primary/10">
-                  <AvatarImage src={profileImage} alt={supplier.business_name} />
-                  <AvatarFallback className="text-3xl bg-primary/10 text-primary">{initials}</AvatarFallback>
-                </Avatar>
-
-                {/* Stats Cards */}
-                <div className="mt-6 space-y-2 w-full">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CheckCircle className="h-4 w-4 text-accent" />
-                    <span className="font-medium">{completedJobs} jobs completed</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Award className="h-4 w-4 text-accent" />
-                    <span className="font-medium">
-                      {serviceOptions.length} active listing{serviceOptions.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  {reviews.length > 0 && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <div className="flex items-center gap-0.5">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 ${
-                              i < Math.floor(averageRating)
-                                ? "fill-accent text-accent"
-                                : i < averageRating
-                                  ? "fill-accent/50 text-accent"
-                                  : "text-muted-foreground/30"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="font-medium">
-                        {averageRating.toFixed(1)} stars ({reviews.length} reviews)
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-accent" />
-                    <span className="font-medium">Quick responder</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Info */}
+      <div className="container mx-auto px-4 py-6 flex-1">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Profile Header */}
+            <div className="flex flex-col sm:flex-row gap-6">
+              <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-lg">
+                <AvatarImage src={profileImage} alt={supplier.business_name} />
+                <AvatarFallback className="text-2xl bg-primary/10 text-primary">{initials}</AvatarFallback>
+              </Avatar>
               <div className="flex-1">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <h1 className="text-3xl font-bold text-foreground mb-1">{supplier.contact_name}</h1>
-                    <p className="text-lg text-muted-foreground">{supplier.business_name}</p>
-                  </div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2">{supplier.business_name}</h1>
+                <div className="flex flex-wrap items-center gap-3 mb-3">
                   {reviews.length > 0 && (
-                    <div className="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-lg">
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
+                    <div className="flex items-center gap-1">
+                      <span className="text-primary font-medium">{getRatingLabel(averageRating)}</span>
+                      <span className="font-semibold">{averageRating.toFixed(1)}</span>
+                      <div className="flex">
+                        {[1, 2, 3, 4, 5].map((star) => (
                           <Star
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i < Math.floor(averageRating)
-                                ? "fill-primary text-primary"
-                                : i < averageRating
-                                  ? "fill-primary/50 text-primary"
-                                  : "text-muted-foreground/30"
-                            }`}
+                            key={star}
+                            className={`h-4 w-4 ${star <= Math.round(averageRating) ? "fill-primary text-primary" : "text-muted-foreground/30"}`}
                           />
                         ))}
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-xl font-bold text-foreground">{averageRating.toFixed(1)}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {reviews.length} review{reviews.length !== 1 ? "s" : ""}
-                        </span>
-                      </div>
+                      <span className="text-muted-foreground">({reviews.length})</span>
                     </div>
                   )}
+                  {completedJobs >= 50 && (
+                    <Badge variant="secondary" className="bg-primary/10 text-primary">
+                      <Award className="h-3 w-3 mr-1" />
+                      Top Pro
+                    </Badge>
+                  )}
                 </div>
+                <ShareProfileButton supplierId={id!} businessName={supplier.business_name} />
+              </div>
+            </div>
 
-                <Separator className="my-4" />
+            {/* Navigation Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="w-full justify-start h-auto p-0 bg-transparent border-b rounded-none">
+                <TabsTrigger 
+                  value="about" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                >
+                  About
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="services" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                >
+                  Services
+                </TabsTrigger>
+                {allImages.length > 0 && (
+                  <TabsTrigger 
+                    value="photos" 
+                    className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                  >
+                    Photos
+                  </TabsTrigger>
+                )}
+                <TabsTrigger 
+                  value="reviews" 
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 py-3"
+                >
+                  Reviews
+                </TabsTrigger>
+              </TabsList>
 
-                {/* About Section */}
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-2 text-foreground">About</h2>
+              {/* About Tab */}
+              <TabsContent value="about" className="mt-6 space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold mb-3">About</h2>
                   <p className="text-muted-foreground leading-relaxed">
                     {supplier.description || "No description provided."}
                   </p>
                 </div>
 
-                {/* Strengths Section */}
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold mb-3 text-foreground">Strengths</h2>
-                  <div className="flex flex-wrap gap-2">
-                    {completedJobs > 0 && (
-                      <Badge variant="outline" className="text-sm px-3 py-1.5">
-                        <CheckCircle className="h-3 w-3 mr-1.5" />
-                        {completedJobs}+ Jobs Completed
-                      </Badge>
-                    )}
-                    {reviews.length > 0 && averageRating >= 4 && (
-                      <Badge variant="outline" className="text-sm px-3 py-1.5">
-                        <Star className="h-3 w-3 mr-1.5 fill-current" />
-                        Highly Rated ({averageRating.toFixed(1)} stars)
-                      </Badge>
-                    )}
-                    {serviceOptions.length > 0 && (
-                      <Badge variant="outline" className="text-sm px-3 py-1.5">
-                        <Award className="h-3 w-3 mr-1.5" />
-                        {serviceOptions.length} Service{serviceOptions.length !== 1 ? "s" : ""} Available
-                      </Badge>
-                    )}
+                <div className="grid sm:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Overview</h3>
+                    <div className="space-y-3">
+                      {completedJobs >= 50 && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Award className="h-4 w-4 text-primary" />
+                          <span>Current Top Pro</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-sm">
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                        <span>Hired {completedJobs} times</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                        <span>Background checked</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{supplier.location || "Location not specified"}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Location & Pricing */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                    <span className="text-foreground">{supplier.location || "Location not specified"}</span>
-                  </div>
-                  <div className="bg-muted/30 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground mb-1">Typical pricing</p>
-                    <p className="text-2xl font-bold text-foreground">
-                      R{supplier.price} {supplier.time_frame && `/ ${supplier.time_frame.replace("per ", "")}`}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Payment methods</h3>
+                    <p className="text-sm text-muted-foreground">
+                      This pro accepts payments via Cash, Card, and Bank Transfer.
                     </p>
+                    {completedJobs >= 50 && (
+                      <div className="mt-4">
+                        <h3 className="text-lg font-semibold mb-2">Top Pro status</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Top Pros are among the highest-rated, most popular professionals on HozaTask.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="mt-4">
-                  <Button
-                    onClick={async () => {
-                      const {
-                        data: { session },
-                      } = await supabase.auth.getSession();
 
-                      if (!session) {
-                        toast({
-                          title: "Authentication Required",
-                          description: "Please login to view contact details",
-                        });
-                        navigate("/auth", { state: { returnTo: `/supplier/${id}` } });
-                        return;
-                      }
-
-                      toast({
-                        title: "Book a Service",
-                        description: "Select a service below and complete booking to view contact details",
-                      });
-                    }}
-                    className="w-full md:w-auto"
-                  >
-                    Show Contact Details
-                  </Button>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Contact details available after booking confirmation
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Services Offered */}
-        {serviceOptions.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Services & Pricing</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {serviceOptions.map((option) => (
-                <Card
-                  key={option.id}
-                  className="cursor-pointer transition-all hover:shadow-lg overflow-hidden"
-                  onClick={() => setSelectedService(option)}
-                >
-                  {option.images && option.images.length > 0 && (
-                    <div className="relative group">
-                      <Carousel className="w-full">
-                        <CarouselContent>
-                          {option.images.map((img, idx) => (
-                            <CarouselItem key={idx}>
-                              <img src={img} alt={`${option.title} ${idx + 1}`} className="w-full h-80 object-cover" />
-                            </CarouselItem>
-                          ))}
-                        </CarouselContent>
-                        {option.images.length > 1 && (
-                          <>
-                            <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </>
-                        )}
-                      </Carousel>
+                {serviceOptions.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Services offered</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {serviceOptions.map((service) => (
+                        <Badge key={service.id} variant="outline">
+                          <CheckCircle className="h-3 w-3 mr-1 text-primary" />
+                          {service.title}
+                        </Badge>
+                      ))}
                     </div>
-                  )}
-                  <CardContent className="pt-4 pb-4">
-                    <div className="mb-3">
-                      <p className="text-lg font-bold text-foreground mb-1">
-                        R{option.price}
-                        {option.time_frame && (
-                          <span className="text-sm font-normal text-muted-foreground ml-1">
-                            / {option.time_frame.replace("per ", "")}
-                          </span>
-                        )}
-                      </p>
-                      <h3 className="font-semibold text-foreground text-base mb-1">{option.title}</h3>
-                      {option.location_area && (
-                        <p className="text-sm text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {option.location_area}
-                        </p>
-                      )}
-                    </div>
-                    {option.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{option.description}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Service Detail Dialog */}
-            <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
-              <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-                {selectedService && (
-                  <>
-                    <DialogHeader>
-                      <DialogTitle className="text-xl">{selectedService.title}</DialogTitle>
-                    </DialogHeader>
-
-                    {selectedService.images && selectedService.images.length > 0 && (
-                      <div className="relative">
-                        <Carousel className="w-full">
-                          <CarouselContent>
-                            {selectedService.images.map((img, idx) => (
-                              <CarouselItem key={idx}>
-                                <div className="aspect-square w-full bg-muted">
-                                  <img
-                                    src={img}
-                                    alt={`${selectedService.title} ${idx + 1}`}
-                                    className="w-full h-full object-contain"
-                                  />
-                                </div>
-                              </CarouselItem>
-                            ))}
-                          </CarouselContent>
-                          {selectedService.images.length > 1 && (
-                            <>
-                              <CarouselPrevious className="left-2" />
-                              <CarouselNext className="right-2" />
-                            </>
-                          )}
-                        </Carousel>
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-2xl font-bold text-foreground">
-                          R{selectedService.price}
-                          {selectedService.time_frame && (
-                            <span className="text-base font-normal text-muted-foreground ml-1">
-                              / {selectedService.time_frame.replace("per ", "")}
-                            </span>
-                          )}
-                        </p>
-                      </div>
-
-                      {selectedService.location_area && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{selectedService.location_area}</span>
-                        </div>
-                      )}
-
-                      {selectedService.description && (
-                        <div>
-                          <h4 className="font-semibold text-foreground mb-2">Description</h4>
-                          <p className="text-muted-foreground">{selectedService.description}</p>
-                        </div>
-                      )}
-
-                      <Button
-                        className="w-full"
-                        size="lg"
-                        onClick={() => {
-                          handleServiceSelect(selectedService.id);
-                          setSelectedService(null);
-                        }}
-                      >
-                        Book This Service
-                      </Button>
-                    </div>
-                  </>
+                  </div>
                 )}
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+              </TabsContent>
 
-        {/* Reviews Section */}
-        <Card className="border-border shadow-sm">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">Reviews ({reviews.length})</h2>
-            {reviews.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No reviews yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-border last:border-0 pb-4 last:pb-0">
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                          {review.customer_name.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div>
-                            <p className="font-semibold text-foreground">{review.customer_name}</p>
-                            <p className="text-sm text-muted-foreground">
+              {/* Services Tab */}
+              <TabsContent value="services" className="mt-6">
+                {serviceOptions.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">No services listed yet.</p>
+                ) : (
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {serviceOptions.map((option) => (
+                      <Card
+                        key={option.id}
+                        className="cursor-pointer hover:shadow-md transition-shadow overflow-hidden"
+                        onClick={() => setSelectedService(option)}
+                      >
+                        {option.images && option.images.length > 0 && (
+                          <div className="relative h-48 overflow-hidden">
+                            <img
+                              src={option.images[0]}
+                              alt={option.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold mb-1">{option.title}</h3>
+                          <p className="text-lg font-bold text-primary">
+                            R{option.price}
+                            {option.time_frame && (
+                              <span className="text-sm font-normal text-muted-foreground ml-1">
+                                / {option.time_frame.replace("per ", "")}
+                              </span>
+                            )}
+                          </p>
+                          {option.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-2">
+                              {option.description}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Photos Tab */}
+              <TabsContent value="photos" className="mt-6">
+                {allImages.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">No photos available.</p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {allImages.map((img, idx) => (
+                      <div key={idx} className="aspect-square overflow-hidden rounded-lg">
+                        <img
+                          src={img}
+                          alt={`Project ${idx + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              {/* Reviews Tab */}
+              <TabsContent value="reviews" className="mt-6 space-y-6">
+                {reviews.length > 0 && (
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <div className="text-center sm:text-left">
+                      <div className="flex items-center gap-2 justify-center sm:justify-start mb-2">
+                        <span className="text-primary font-medium">{getRatingLabel(averageRating)}</span>
+                        <span className="text-2xl font-bold">{averageRating.toFixed(1)}</span>
+                      </div>
+                      <p className="text-muted-foreground">{reviews.length} reviews</p>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      {ratingDistribution.map((item) => (
+                        <div key={item.rating} className="flex items-center gap-2 text-sm">
+                          <span className="w-4">{item.rating}</span>
+                          <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full"
+                              style={{ width: `${item.percentage}%` }}
+                            />
+                          </div>
+                          <span className="w-10 text-right text-muted-foreground">{Math.round(item.percentage)}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {reviews.length === 0 ? (
+                  <p className="text-muted-foreground py-8 text-center">No reviews yet.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {reviews.map((review) => (
+                      <div key={review.id} className="border-b pb-6 last:border-0">
+                        <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                              {review.customer_name.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold">{review.customer_name}</p>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-4 w-4 ${star <= review.rating ? "fill-primary text-primary" : "text-muted-foreground/30"}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-sm text-muted-foreground mb-2">
                               {new Date(review.created_at).toLocaleDateString("en-US", {
                                 year: "numeric",
                                 month: "long",
                                 day: "numeric",
                               })}
                             </p>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating ? "fill-primary text-primary" : "text-muted-foreground/30"
-                                }`}
-                              />
-                            ))}
+                            {review.comment && <p className="text-foreground">{review.comment}</p>}
                           </div>
                         </div>
-                        {review.comment && <p className="text-foreground leading-relaxed">{review.comment}</p>}
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar - Contact Card */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-4">
+              <Card className="border-l-4 border-l-primary">
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                    <span className="font-medium">Contact for price</span>
+                  </div>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={async () => {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session) {
+                        toast({ title: "Authentication Required", description: "Please login to message this pro" });
+                        navigate("/auth", { state: { returnTo: `/supplier/${id}` } });
+                        return;
+                      }
+                      toast({ title: "Coming Soon", description: "Direct messaging will be available soon!" });
+                    }}
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    size="lg"
+                    onClick={async () => {
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (!session) {
+                        toast({ title: "Authentication Required", description: "Please login to request a call" });
+                        navigate("/auth", { state: { returnTo: `/supplier/${id}` } });
+                        return;
+                      }
+                      if (supplier.phone) {
+                        window.location.href = `tel:${supplier.phone}`;
+                      }
+                    }}
+                  >
+                    <Phone className="h-4 w-4 mr-2" />
+                    Request a call
+                  </Button>
+
+                  {supplier.price && (
+                    <div className="pt-4 border-t">
+                      <p className="text-sm text-muted-foreground mb-1">Starting from</p>
+                      <p className="text-2xl font-bold">
+                        R{supplier.price}
+                        {supplier.time_frame && (
+                          <span className="text-sm font-normal text-muted-foreground ml-1">
+                            / {supplier.time_frame.replace("per ", "")}
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Stats */}
+              <Card className="mt-4">
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span>Usually responds within 1 hour</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <span>Available today</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Service Detail Dialog */}
+      <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          {selectedService && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-xl">{selectedService.title}</DialogTitle>
+              </DialogHeader>
+
+              {selectedService.images && selectedService.images.length > 0 && (
+                <Carousel className="w-full">
+                  <CarouselContent>
+                    {selectedService.images.map((img, idx) => (
+                      <CarouselItem key={idx}>
+                        <div className="aspect-video w-full bg-muted rounded-lg overflow-hidden">
+                          <img src={img} alt={`${selectedService.title} ${idx + 1}`} className="w-full h-full object-cover" />
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  {selectedService.images.length > 1 && (
+                    <>
+                      <CarouselPrevious className="left-2" />
+                      <CarouselNext className="right-2" />
+                    </>
+                  )}
+                </Carousel>
+              )}
+
+              <div className="space-y-4">
+                <p className="text-2xl font-bold text-primary">
+                  R{selectedService.price}
+                  {selectedService.time_frame && (
+                    <span className="text-base font-normal text-muted-foreground ml-1">
+                      / {selectedService.time_frame.replace("per ", "")}
+                    </span>
+                  )}
+                </p>
+
+                {selectedService.location_area && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedService.location_area}</span>
+                  </div>
+                )}
+
+                {selectedService.description && (
+                  <div>
+                    <h4 className="font-semibold mb-2">Description</h4>
+                    <p className="text-muted-foreground">{selectedService.description}</p>
+                  </div>
+                )}
+
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => {
+                    handleServiceSelect(selectedService.id);
+                    setSelectedService(null);
+                  }}
+                >
+                  Book This Service
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
