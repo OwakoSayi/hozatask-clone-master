@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, MapPin } from "lucide-react";
+import { Star, MapPin, Search, Users } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ProCard } from "@/components/ProCard";
+import { getPopularCategories, CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
 
 interface Supplier {
   id: string;
@@ -33,20 +36,39 @@ interface SupplierWithRating extends Supplier {
 
 const SupplierDirectory = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [suppliers, setSuppliers] = useState<SupplierWithRating[]>([]);
   const [filteredSuppliers, setFilteredSuppliers] = useState<SupplierWithRating[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>(searchParams.get("category") || "all");
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const popularCategories = getPopularCategories();
 
   useEffect(() => {
     loadSuppliers();
   }, []);
 
   useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setCategoryFilter(categoryParam);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     filterSuppliers();
   }, [suppliers, searchTerm, categoryFilter]);
+
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+    if (value === "all") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ category: value });
+    }
+  };
 
   const loadSuppliers = async () => {
     try {
@@ -124,100 +146,105 @@ const SupplierDirectory = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       
-      <div className="container mx-auto px-4 py-8 flex-1">
-        <h1 className="text-3xl font-bold mb-2">Browse Suppliers</h1>
-        <p className="text-muted-foreground mb-6">
-          Find the perfect supplier for your needs
-        </p>
-
-        {/* Filters */}
-        <div className="grid md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <Input
-              placeholder="Search suppliers..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+      {/* Hero Section */}
+      <section className="bg-primary/5 py-12 px-4">
+        <div className="container mx-auto max-w-4xl text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Users className="h-8 w-8 text-primary" />
           </div>
-          <div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            {categoryFilter !== "all" ? `${categoryFilter} Professionals` : "Find Trusted Professionals"}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            Browse verified pros ready to help with your project
+          </p>
+          
+          {/* Search Bar */}
+          <div className="flex flex-col md:flex-row gap-3 max-w-xl mx-auto">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search professionals..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+              <SelectTrigger className="md:w-48">
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+      </section>
 
-        <p className="text-sm text-muted-foreground mb-4">
-          {filteredSuppliers.length} supplier{filteredSuppliers.length !== 1 ? "s" : ""} found
-        </p>
+      {/* Popular Categories */}
+      {categoryFilter === "all" && (
+        <section className="py-6 px-4 border-b">
+          <div className="container mx-auto">
+            <div className="flex flex-wrap gap-2 justify-center">
+              {popularCategories.slice(0, 8).map((category) => (
+                <Button
+                  key={category.slug}
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => handleCategoryChange(category.name)}
+                >
+                  <span className="mr-1">{category.icon}</span>
+                  {category.name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <div className="container mx-auto px-4 py-8 flex-1">
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-muted-foreground">
+            {filteredSuppliers.length} professional{filteredSuppliers.length !== 1 ? "s" : ""} found
+          </p>
+          {categoryFilter !== "all" && (
+            <Button variant="ghost" size="sm" onClick={() => handleCategoryChange("all")}>
+              Clear filter
+            </Button>
+          )}
+        </div>
 
         {filteredSuppliers.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">No suppliers found matching your criteria</p>
+              <p className="text-muted-foreground mb-4">No professionals found matching your criteria</p>
+              <Button variant="outline" onClick={() => { setSearchTerm(""); handleCategoryChange("all"); }}>
+                Clear filters
+              </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredSuppliers.map((supplier) => (
-              <Card
+              <ProCard
                 key={supplier.id}
-                className="cursor-pointer hover:shadow-lg transition-all"
+                id={supplier.id}
+                businessName={supplier.business_name}
+                title={supplier.title}
+                description={supplier.description}
+                category={supplier.category}
+                location={supplier.location}
+                images={supplier.images}
+                price={supplier.price}
+                averageRating={supplier.averageRating}
+                reviewCount={supplier.reviewCount}
                 onClick={() => navigate(`/supplier/${supplier.id}`)}
-              >
-                {supplier.images && supplier.images.length > 0 && (
-                  <img
-                    src={supplier.images[0]}
-                    alt={supplier.business_name}
-                    className="w-full h-48 object-cover rounded-t-lg"
-                  />
-                )}
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <CardTitle className="text-xl">{supplier.business_name}</CardTitle>
-                    {supplier.reviewCount > 0 && (
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-semibold text-sm">
-                          {supplier.averageRating.toFixed(1)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{supplier.title}</p>
-                  <Badge variant="secondary" className="w-fit">{supplier.category}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-4 text-sm line-clamp-2">
-                    {supplier.description}
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{supplier.location}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">
-                        R{supplier.price}
-                      </span>
-                      {supplier.reviewCount > 0 && (
-                        <span className="text-xs text-muted-foreground">
-                          {supplier.reviewCount} review{supplier.reviewCount !== 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              />
             ))}
           </div>
         )}

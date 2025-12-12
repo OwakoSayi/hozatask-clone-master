@@ -10,7 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeaturedPros } from "@/components/FeaturedPros";
+import { Users, Grid3X3 } from "lucide-react";
 interface ServiceOption {
   id: string;
   title: string;
@@ -181,9 +183,35 @@ const CategoryListings = () => {
         <h1 className="text-3xl font-bold mb-2 capitalize text-foreground">
           {category?.replace("-", " ")}
         </h1>
-        <p className="text-muted-foreground mb-8">
-          Select 1-3 options that interest you ({selectedIds.length}/3 selected)
+        <p className="text-muted-foreground mb-4">
+          Find trusted professionals or browse specific services
         </p>
+
+        <Tabs defaultValue="services" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="services" className="gap-2">
+              <Grid3X3 className="h-4 w-4" />
+              Services
+            </TabsTrigger>
+            <TabsTrigger value="pros" className="gap-2">
+              <Users className="h-4 w-4" />
+              View Pros
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pros">
+            <FeaturedPros 
+              category={category} 
+              limit={8} 
+              title={`Top ${category?.replace("-", " ")} pros`}
+              showViewAll={true}
+            />
+          </TabsContent>
+
+          <TabsContent value="services">
+            <p className="text-muted-foreground mb-6">
+              Select 1-3 options that interest you ({selectedIds.length}/3 selected)
+            </p>
 
         {options.length === 0 ? (
           <Card>
@@ -266,6 +294,8 @@ const CategoryListings = () => {
             </div>
           </>
         )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Footer />
