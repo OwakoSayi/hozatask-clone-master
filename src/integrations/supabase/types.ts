@@ -149,6 +149,118 @@ export type Database = {
         }
         Relationships: []
       }
+      project_requests: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          category: string
+          created_at: string
+          description: string
+          id: string
+          location: string
+          preferred_date: string | null
+          preferred_time: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          zip_code: string | null
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          location: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          zip_code?: string | null
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          location?: string
+          preferred_date?: string | null
+          preferred_time?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          zip_code?: string | null
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          created_at: string
+          estimated_duration: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          price: number
+          request_id: string
+          status: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estimated_duration?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          price: number
+          request_id: string
+          status?: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estimated_duration?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          price?: number
+          request_id?: string
+          status?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "project_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "public_suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reviews: {
         Row: {
           booking_id: string | null

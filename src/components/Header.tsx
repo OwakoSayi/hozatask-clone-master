@@ -68,23 +68,36 @@ export const Header = () => {
 
   const NavItems = () => (
     <>
-      <Button variant="ghost" onClick={() => handleNavigate("/browse")} className="w-full md:w-auto justify-start md:justify-center">
-        Browse Services
+      <Button variant="ghost" onClick={() => handleNavigate("/post-project")} className="w-full md:w-auto justify-start md:justify-center">
+        Get Quotes
+      </Button>
+      <Button variant="ghost" onClick={() => handleNavigate("/suppliers")} className="w-full md:w-auto justify-start md:justify-center">
+        Find Pros
       </Button>
       {!isSupplier && (
         <Button variant="outline" size="sm" onClick={() => handleNavigate("/supplier-submission")} className="w-full md:w-auto">
-          List Your Service
+          Become a Pro
         </Button>
       )}
       {user && isSupplier && (
-        <Button variant="ghost" onClick={() => handleNavigate("/supplier-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
-          My Dashboard
-        </Button>
+        <>
+          <Button variant="ghost" onClick={() => handleNavigate("/pro-leads")} className="w-full md:w-auto justify-start md:justify-center">
+            Leads
+          </Button>
+          <Button variant="ghost" onClick={() => handleNavigate("/supplier-dashboard")} className="w-full md:w-auto justify-start md:justify-center">
+            Dashboard
+          </Button>
+        </>
       )}
       {user && !isSupplier && (
-        <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
-          My Account
-        </Button>
+        <>
+          <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full md:w-auto justify-start md:justify-center">
+            My Projects
+          </Button>
+          <Button variant="ghost" onClick={() => handleNavigate("/my-account")} className="w-full md:w-auto justify-start md:justify-center">
+            Account
+          </Button>
+        </>
       )}
       {user ? (
         <Button onClick={handleLogout} className="w-full md:w-auto">
