@@ -214,48 +214,65 @@ const BookingForm = () => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handlePaystackPayment = async () => {
     setSubmitting(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      
-      const { data, error } = await supabase
-        .from("bookings")
-        .insert({
-          customer_name: userProfile?.full_name || "",
-          phone: userProfile?.phone || "",
-          email: session?.user?.email || "",
-          address: formData.event_address,
-          event_date: formData.event_date,
-          event_time: formData.event_time || null,
-          event_type: formData.event_type,
-          notes: formData.notes,
-          selected_option_ids: selectedIds,
-          booking_fee_paid: true,
-          payment_intent_id: null,
-          status: "New",
-          user_id: session?.user?.id || null,
-        })
-        .select()
-        .single();
+      const email = session?.user?.email || "";
 
-      if (error) throw error;
+      if (!email) {
+        toast({
+          title: "Error",
+          description: "Email is required for payment",
+          variant: "destructive",
+        });
+        setSubmitting(false);
+        return;
+      }
 
-      toast({
-        title: "Success!",
-        description: "Your booking has been submitted",
-      });
+      const reference = `booking_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      navigate("/booking-confirmation", { state: { bookingId: data.id } });
+      // Initialize payment via edge function
+      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+        'create-paystack-payment',
+        {
+          body: {
+            email,
+            amount: 50, // R50
+            reference,
+          },
+        }
+      );
+
+      if (paymentError || !paymentData) {
+        throw new Error(paymentError?.message || "Failed to initialize payment");
+      }
+
+      // Store booking data in sessionStorage for after redirect
+      sessionStorage.setItem('pendingBooking', JSON.stringify({
+        customer_name: userProfile?.full_name || "",
+        phone: userProfile?.phone || "",
+        email: email,
+        address: formData.event_address,
+        event_date: formData.event_date,
+        event_time: formData.event_time || null,
+        event_type: formData.event_type,
+        notes: formData.notes,
+        selected_option_ids: selectedIds,
+        payment_reference: reference,
+        user_id: session?.user?.id || null,
+      }));
+
+      // Redirect to Paystack payment page
+      window.location.href = paymentData.authorization_url;
     } catch (error) {
-      console.error("Error creating booking:", error);
+      console.error("Error initializing payment:", error);
       toast({
         title: "Error",
-        description: "Failed to submit booking. Please try again.",
+        description: "Failed to initialize payment. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setSubmitting(false);
     }
   };
@@ -526,14 +543,11 @@ const BookingForm = () => {
                 {/* Confirm Booking with Payment */}
                 <div className="space-y-4">
                   <p className="text-sm text-center text-muted-foreground">
-                    Clicking below will open PayPal to complete your R50 booking fee payment
+                    Clicking below will open Paystack to complete your R50 booking fee payment
                   </p>
                   <Button 
                     type="button" 
-                    onClick={() => {
-                      window.open('https://www.paypal.com/ncp/payment/FLZUSK3CP4U4E', '_blank');
-                      handleSubmit();
-                    }}
+                    onClick={handlePaystackPayment}
                     disabled={submitting}
                     className="w-full" 
                     size="lg"

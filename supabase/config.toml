@@ -1,1 +1,7 @@
 project_id = "uxmdbznodlamunpjiggn"
+
+[functions.create-paystack-payment]
+verify_jwt = false
+
+[functions.verify-paystack-payment]
+verify_jwt = false
