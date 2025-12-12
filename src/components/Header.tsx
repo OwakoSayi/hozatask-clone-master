@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, ChevronDown, ChevronRight, User } from "lucide-react";
+import { Menu, ChevronDown, ChevronRight, User, Bell, MessageCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -29,15 +29,18 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "./ui/collapsible";
+import { Badge } from "./ui/badge";
 import { CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [user, setUser] = useState<any>(null);
-  const [isSupplier, setIsSupplier] = useState(false);
+  const [isSupplierUser, setIsSupplierUser] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const { counts } = useNotifications();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -52,7 +55,7 @@ export const Header = () => {
       if (session?.user) {
         checkSupplierStatus(session.user.id);
       } else {
-        setIsSupplier(false);
+        setIsSupplierUser(false);
       }
     });
 
@@ -67,7 +70,7 @@ export const Header = () => {
       .eq("status", "Active")
       .maybeSingle();
     
-    setIsSupplier(!!data);
+    setIsSupplierUser(!!data);
   };
 
   const handleLogout = async () => {
@@ -162,7 +165,7 @@ export const Header = () => {
           </>
         )}
         
-        {user && isSupplier && (
+        {user && isSupplierUser && (
           <>
             <Button variant="ghost" onClick={() => handleNavigate("/leads")} className="w-full justify-start">
               Leads
@@ -178,13 +181,23 @@ export const Header = () => {
         
         {user && (
           <>
-            <Button variant="ghost" onClick={() => handleNavigate("/messages")} className="w-full justify-start">
-              Messages
+            <Button variant="ghost" onClick={() => handleNavigate("/messages")} className="w-full justify-between">
+              <span>Messages</span>
+              {counts.unreadMessages > 0 && (
+                <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                  {counts.unreadMessages}
+                </Badge>
+              )}
             </Button>
-            {!isSupplier && (
+            {!isSupplierUser && (
               <>
-                <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-start">
-                  My Projects
+                <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-between">
+                  <span>My Projects</span>
+                  {counts.unreadQuotes > 0 && (
+                    <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                      {counts.unreadQuotes}
+                    </Badge>
+                  )}
                 </Button>
                 <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full justify-start">
                   Account
@@ -247,14 +260,14 @@ export const Header = () => {
             </NavigationMenu>
 
             {/* Join as a pro */}
-            {!isSupplier && (
+            {!isSupplierUser && (
               <Button variant="ghost" onClick={() => handleNavigate("/become-pro")}>
                 Join as a pro
               </Button>
             )}
 
             {/* Pro Links */}
-            {user && isSupplier && (
+            {user && isSupplierUser && (
               <>
                 <Button variant="ghost" onClick={() => handleNavigate("/leads")}>
                   Leads
@@ -276,37 +289,70 @@ export const Header = () => {
                 </Button>
               </div>
             ) : (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <User className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  {!isSupplier && (
-                    <>
-                      <DropdownMenuItem onClick={() => handleNavigate("/my-projects")}>
-                        My Projects
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleNavigate("/account")}>
-                        Account
-                      </DropdownMenuItem>
-                    </>
+              <div className="flex items-center gap-2 ml-4">
+                {/* Messages with notification badge */}
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="relative"
+                  onClick={() => handleNavigate("/messages")}
+                >
+                  <MessageCircle className="h-5 w-5" />
+                  {counts.unreadMessages > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                      {counts.unreadMessages > 99 ? '99+' : counts.unreadMessages}
+                    </span>
                   )}
-                  {isSupplier && (
-                    <DropdownMenuItem onClick={() => handleNavigate("/buy-credits")}>
-                      Buy Credits
+                </Button>
+
+                {/* User menu dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full relative">
+                      <User className="h-5 w-5" />
+                      {counts.total > 0 && (
+                        <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-4 min-w-4 flex items-center justify-center">
+                          {counts.total > 9 ? '9+' : counts.total}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    {!isSupplierUser && (
+                      <>
+                        <DropdownMenuItem onClick={() => handleNavigate("/my-projects")} className="flex justify-between">
+                          My Projects
+                          {counts.unreadQuotes > 0 && (
+                            <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                              {counts.unreadQuotes}
+                            </Badge>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleNavigate("/account")}>
+                          Account
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {isSupplierUser && (
+                      <DropdownMenuItem onClick={() => handleNavigate("/buy-credits")}>
+                        Buy Credits
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={() => handleNavigate("/messages")} className="flex justify-between">
+                      Messages
+                      {counts.unreadMessages > 0 && (
+                        <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                          {counts.unreadMessages}
+                        </Badge>
+                      )}
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => handleNavigate("/messages")}>
-                    Messages
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </nav>
         )}
