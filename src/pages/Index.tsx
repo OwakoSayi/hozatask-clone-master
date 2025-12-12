@@ -4,58 +4,17 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CATEGORIES, CATEGORY_GROUPS, getCategoriesByGroup } from "@/config/categories";
+import { 
+  getPopularCategories, 
+  QUICK_LINK_CATEGORIES, 
+  PROJECT_TABS,
+  getCategoryByName 
+} from "@/config/categories";
 import { Shield, Clock, CheckCircle, ChevronRight, Star } from "lucide-react";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const popularServices = [
-  { name: "House Cleaning", slug: "house-cleaning" },
-  { name: "Handyman Services", slug: "handyman" },
-  { name: "Moving & Delivery", slug: "moving" },
-  { name: "Plumbing", slug: "plumbing" },
-  { name: "Electrical Work", slug: "electrical" },
-  { name: "Painting & Decorating", slug: "painting" },
-  { name: "Furniture Assembly", slug: "furniture-assembly" },
-  { name: "Gardening & Landscaping", slug: "gardening-landscaping" },
-];
-
-const quickLinks = [
-  { name: "House Cleaning", category: "House Cleaning" },
-  { name: "Carpet Cleaning", category: "Carpet Cleaning" },
-  { name: "Junk Removal", category: "Junk Removal" },
-  { name: "Pressure Washing", category: "Pressure Washing" },
-];
-
-const projectTabs = [
-  { id: "home-maintenance", label: "Home Maintenance" },
-  { id: "home-remodeling", label: "Home Remodeling" },
-  { id: "outdoor-upkeep", label: "Outdoor Upkeep" },
-  { id: "essential-services", label: "Essential Home Services" },
-];
-
-const tabContent: Record<string, { title: string; description: string; services: string[] }> = {
-  "home-maintenance": {
-    title: "These annoying chores used to eat up your entire weekend. Not anymore.",
-    description: "See all home maintenance projects.",
-    services: ["House Cleaning", "Handyman Services", "Painting & Decorating"],
-  },
-  "home-remodeling": {
-    title: "Transform your space with professional help.",
-    description: "See all home remodeling projects.",
-    services: ["Carpentry", "Flooring", "Roofing"],
-  },
-  "outdoor-upkeep": {
-    title: "Keep your outdoor spaces pristine year-round.",
-    description: "See all outdoor projects.",
-    services: ["Gardening & Landscaping", "Lawn Care & Mowing", "Pool Maintenance"],
-  },
-  "essential-services": {
-    title: "Essential services to keep your home running smoothly.",
-    description: "See all essential services.",
-    services: ["Plumbing", "Electrical Work", "HVAC Services"],
-  },
-};
+const popularCategories = getPopularCategories();
 
 const Index = () => {
   const navigate = useNavigate();
@@ -144,30 +103,34 @@ const Index = () => {
           
           {/* Service Pills - Scrollable */}
           <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {popularServices.map((service) => (
+            {popularCategories.map((category) => (
               <Button
-                key={service.slug}
+                key={category.slug}
                 variant="outline"
                 className="rounded-full bg-background hover:bg-primary hover:text-primary-foreground transition-all"
-                onClick={() => navigate(`/post-project?category=${encodeURIComponent(service.name)}`)}
+                onClick={() => navigate(`/post-project?category=${encodeURIComponent(category.name)}`)}
               >
-                {service.name}
+                <span className="mr-1">{category.icon}</span>
+                {category.name}
               </Button>
             ))}
           </div>
 
           {/* Quick Links */}
           <div className="flex flex-wrap justify-center gap-4">
-            {quickLinks.map((link) => (
-              <Button
-                key={link.name}
-                variant="link"
-                className="text-primary underline"
-                onClick={() => navigate(`/post-project?category=${encodeURIComponent(link.category)}`)}
-              >
-                {link.name}
-              </Button>
-            ))}
+            {QUICK_LINK_CATEGORIES.map((categoryName) => {
+              const category = getCategoryByName(categoryName);
+              return (
+                <Button
+                  key={categoryName}
+                  variant="link"
+                  className="text-primary underline"
+                  onClick={() => navigate(`/post-project?category=${encodeURIComponent(categoryName)}`)}
+                >
+                  {categoryName}
+                </Button>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -223,7 +186,7 @@ const Index = () => {
 
           <Tabs defaultValue="home-maintenance" className="w-full">
             <TabsList className="grid grid-cols-2 md:grid-cols-4 w-full max-w-2xl mx-auto mb-8 h-auto">
-              {projectTabs.map((tab) => (
+              {PROJECT_TABS.map((tab) => (
                 <TabsTrigger 
                   key={tab.id} 
                   value={tab.id}
@@ -234,33 +197,37 @@ const Index = () => {
               ))}
             </TabsList>
 
-            {projectTabs.map((tab) => (
+            {PROJECT_TABS.map((tab) => (
               <TabsContent key={tab.id} value={tab.id}>
                 <Card className="border-0 shadow-lg">
                   <CardContent className="p-8">
                     <div className="grid md:grid-cols-2 gap-8">
                       <div>
-                        <p className="text-lg mb-4">{tabContent[tab.id].title}</p>
+                        <p className="text-lg mb-4">{tab.title}</p>
                         <Button 
                           variant="link" 
                           className="text-primary p-0"
                           onClick={() => navigate("/post-project")}
                         >
-                          {tabContent[tab.id].description}
+                          {tab.description}
                           <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       </div>
                       <div className="flex flex-wrap gap-3">
-                        {tabContent[tab.id].services.map((service) => (
-                          <Button
-                            key={service}
-                            variant="outline"
-                            className="rounded-full"
-                            onClick={() => navigate(`/post-project?category=${encodeURIComponent(service)}`)}
-                          >
-                            {service}
-                          </Button>
-                        ))}
+                        {tab.services.map((serviceName) => {
+                          const category = getCategoryByName(serviceName);
+                          return (
+                            <Button
+                              key={serviceName}
+                              variant="outline"
+                              className="rounded-full"
+                              onClick={() => navigate(`/post-project?category=${encodeURIComponent(serviceName)}`)}
+                            >
+                              {category && <span className="mr-1">{category.icon}</span>}
+                              {serviceName}
+                            </Button>
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>

@@ -132,3 +132,72 @@ export const getGroupedCategories = () => {
     categories: getCategoriesByGroup(group),
   }));
 };
+
+// Get category by name (case-insensitive)
+export const getCategoryByName = (name: string) => {
+  return CATEGORIES.find(cat => cat.name.toLowerCase() === name.toLowerCase());
+};
+
+// Get category by slug
+export const getCategoryBySlug = (slug: string) => {
+  return CATEGORIES.find(cat => cat.slug === slug);
+};
+
+// Popular categories for homepage display
+export const POPULAR_CATEGORIES = [
+  "House Cleaning",
+  "Handyman Services",
+  "Moving & Delivery",
+  "Plumbing",
+  "Electrical Work",
+  "Painting & Decorating",
+  "Furniture Assembly",
+  "Gardening & Landscaping",
+];
+
+// Get popular category objects
+export const getPopularCategories = () => {
+  return POPULAR_CATEGORIES
+    .map(name => getCategoryByName(name))
+    .filter((cat): cat is Category => cat !== undefined);
+};
+
+// Quick link categories
+export const QUICK_LINK_CATEGORIES = [
+  "House Cleaning",
+  "Carpet Cleaning", 
+  "Junk Removal",
+  "Pressure Washing",
+];
+
+// Project exploration tabs mapping to category groups
+export const PROJECT_TABS = [
+  {
+    id: "home-maintenance",
+    label: "Home Maintenance",
+    title: "These annoying chores used to eat up your entire weekend. Not anymore.",
+    description: "See all home maintenance projects.",
+    services: ["House Cleaning", "Handyman Services", "Painting & Decorating"],
+  },
+  {
+    id: "home-remodeling", 
+    label: "Home Remodeling",
+    title: "Transform your space with professional help.",
+    description: "See all home remodeling projects.",
+    services: ["Carpentry", "Flooring", "Roofing"],
+  },
+  {
+    id: "outdoor-upkeep",
+    label: "Outdoor Upkeep", 
+    title: "Keep your outdoor spaces pristine year-round.",
+    description: "See all outdoor projects.",
+    services: ["Gardening & Landscaping", "Lawn Care & Mowing", "Pool Maintenance"],
+  },
+  {
+    id: "essential-services",
+    label: "Essential Home Services",
+    title: "Essential services to keep your home running smoothly.",
+    description: "See all essential services.",
+    services: ["Plumbing", "Electrical Work", "HVAC Services"],
+  },
+];
