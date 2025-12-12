@@ -10,9 +10,10 @@ import {
   PROJECT_TABS,
   getCategoryByName 
 } from "@/config/categories";
-import { Shield, Clock, CheckCircle, ChevronRight, Star } from "lucide-react";
+import { Shield, Clock, CheckCircle, ChevronRight, Star, Users } from "lucide-react";
 import { SearchAutocomplete } from "@/components/SearchAutocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeaturedPros } from "@/components/FeaturedPros";
 
 const popularCategories = getPopularCategories();
 
@@ -132,6 +133,17 @@ const Index = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Featured Pros Section */}
+      <section className="py-12 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <FeaturedPros 
+            title="Top-rated pros ready to help" 
+            limit={4} 
+            showViewAll={true}
+          />
         </div>
       </section>
 
