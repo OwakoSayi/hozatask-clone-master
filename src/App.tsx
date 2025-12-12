@@ -7,10 +7,6 @@ import { AuthRedirectHandler } from "./components/AuthRedirectHandler";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
-import BrowseServices from "./pages/BrowseServices";
-import CategoryListings from "./pages/CategoryListings";
-import BookingForm from "./pages/BookingForm";
-import BookingConfirmation from "./pages/BookingConfirmation";
 import SupplierSubmission from "./pages/SupplierSubmission";
 import SupplierProfile from "./pages/SupplierProfile";
 import SupplierDashboard from "./pages/SupplierDashboard";
@@ -19,6 +15,9 @@ import PostProject from "./pages/PostProject";
 import MyProjects from "./pages/MyProjects";
 import ProjectDetail from "./pages/ProjectDetail";
 import ProLeads from "./pages/ProLeads";
+import BuyCredits from "./pages/BuyCredits";
+import Messages from "./pages/Messages";
+import CostGuide from "./pages/CostGuide";
 
 import AdminAuth from "./pages/AdminAuth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -39,24 +38,37 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/browse" element={<BrowseServices />} />
-          <Route path="/suppliers" element={<SupplierDirectory />} />
-          <Route path="/category/:category" element={<CategoryListings />} />
-          <Route path="/booking" element={<BookingForm />} />
-          <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-          <Route path="/supplier-submission" element={<SupplierSubmission />} />
-          <Route path="/supplier/:id" element={<SupplierProfile />} />
-          <Route path="/supplier-dashboard" element={<SupplierDashboard />} />
           
-          {/* Thumbtack-style project request flow */}
+          {/* Pro directory */}
+          <Route path="/pros" element={<SupplierDirectory />} />
+          <Route path="/pros/:category" element={<SupplierDirectory />} />
+          <Route path="/pro/:id" element={<SupplierProfile />} />
+          
+          {/* Customer flow - Get quotes */}
           <Route path="/post-project" element={<PostProject />} />
           <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/project/:id" element={<ProjectDetail />} />
-          <Route path="/pro-leads" element={<ProLeads />} />
           
+          {/* Pro flow */}
+          <Route path="/become-pro" element={<SupplierSubmission />} />
+          <Route path="/pro-dashboard" element={<SupplierDashboard />} />
+          <Route path="/leads" element={<ProLeads />} />
+          <Route path="/buy-credits" element={<BuyCredits />} />
+          
+          {/* Messaging */}
+          <Route path="/messages" element={<Messages />} />
+          
+          {/* Cost guides */}
+          <Route path="/cost-guides" element={<CostGuide />} />
+          <Route path="/cost-guides/:category" element={<CostGuide />} />
+          
+          {/* Admin */}
           <Route path="/admin/login" element={<AdminAuth />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/my-account" element={<CustomerAccount />} />
+          
+          {/* Account */}
+          <Route path="/account" element={<CustomerAccount />} />
+          
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
