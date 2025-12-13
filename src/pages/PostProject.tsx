@@ -9,13 +9,14 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { ChevronLeft, ChevronRight, CheckCircle, Upload, X, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, Upload, X, Loader2, Bell, Clock, Shield } from "lucide-react";
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/contexts/UserContext";
 import { uploadImagesParallel } from "@/lib/uploadImages";
 import { supabase } from "@/integrations/supabase/client";
+import { MatchingPros } from "@/components/MatchingPros";
 
 const PostProject = () => {
   const navigate = useNavigate();
@@ -165,35 +166,76 @@ const PostProject = () => {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
-        <div className="container mx-auto px-4 py-16 flex-1 max-w-2xl">
-          <Card className="text-center py-12">
-            <CardContent className="space-y-6">
-              <div className="relative">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <CheckCircle className="h-10 w-10 text-green-600" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-24 h-24 border-4 border-green-200 rounded-full animate-ping opacity-50" />
-                </div>
+        <div className="container mx-auto px-4 py-8 flex-1 max-w-3xl">
+          {/* Success Header */}
+          <div className="text-center mb-8">
+            <div className="relative inline-block mb-4">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <h1 className="text-2xl font-bold">We're finding pros near you!</h1>
-              <p className="text-muted-foreground">
-                Your project has been posted. Pros in your area will review your request and send quotes.
-                You'll be notified when you receive responses.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Pros usually respond within 30 minutes
-              </p>
-              <div className="flex gap-4 justify-center pt-4">
-                <Button onClick={() => navigate("/my-projects")}>
-                  View My Projects
-                </Button>
-                <Button variant="outline" onClick={() => navigate("/suppliers")}>
-                  Browse Pros
-                </Button>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-20 h-20 border-4 border-green-200 rounded-full animate-ping opacity-30" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Your request is live!</h1>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              We found pros who match your {formData.category} project in {formData.location}
+            </p>
+          </div>
+
+          {/* What happens next */}
+          <Card className="mb-6 bg-primary/5 border-primary/20">
+            <CardContent className="py-4">
+              <h3 className="font-semibold mb-3 text-sm">What happens next?</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Bell className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Receive quotes</p>
+                    <p className="text-xs text-muted-foreground">Pros will send personalized quotes</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Clock className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Compare & chat</p>
+                    <p className="text-xs text-muted-foreground">Review options and ask questions</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium">Hire with confidence</p>
+                    <p className="text-xs text-muted-foreground">Book your chosen pro securely</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Matching Pros - Thumbtack style instant results */}
+          <div className="mb-6">
+            <MatchingPros 
+              category={formData.category} 
+              location={formData.location}
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button onClick={() => navigate("/my-projects")} size="lg">
+              Track My Projects
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => navigate("/")}>
+              Back to Home
+            </Button>
+          </div>
         </div>
         <Footer />
       </div>
