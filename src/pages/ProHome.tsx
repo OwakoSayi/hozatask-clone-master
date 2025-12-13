@@ -12,8 +12,6 @@ import { ProReviewsSection } from "@/components/pro/ProReviewsSection";
 import { ProProfileSection } from "@/components/pro/ProProfileSection";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-import { Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface Supplier {
   id: string;
@@ -291,11 +289,7 @@ const ProHome = () => {
             <div className="p-4 sm:p-6 lg:p-8">
               {/* Mobile sidebar trigger */}
               <div className="flex items-center gap-4 mb-6 lg:hidden">
-                <SidebarTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                </SidebarTrigger>
+                <SidebarTrigger />
                 <h1 className="text-xl font-semibold capitalize">{activeSection}</h1>
               </div>
 
