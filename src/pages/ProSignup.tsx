@@ -46,6 +46,16 @@ const STEPS = [
   { id: 5, title: "Photos", description: "Show your work" },
 ];
 
+// Moved outside component to prevent re-renders causing input focus loss
+const AnimatedField = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
+  <div 
+    className="animate-fade-in opacity-0"
+    style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
+  >
+    {children}
+  </div>
+);
+
 const ProSignup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -393,16 +403,6 @@ const ProSignup = () => {
       </div>
     );
   }
-
-  // Animated form field wrapper component
-  const AnimatedField = ({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) => (
-    <div 
-      className="animate-fade-in opacity-0"
-      style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
-    >
-      {children}
-    </div>
-  );
 
   const renderStepContent = () => {
     switch (currentStep) {
