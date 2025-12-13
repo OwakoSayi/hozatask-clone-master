@@ -357,7 +357,13 @@ export const Header = () => {
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+                    <DropdownMenuItem 
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        handleLogout();
+                      }} 
+                      className="text-destructive cursor-pointer"
+                    >
                       Log out
                     </DropdownMenuItem>
                   </DropdownMenuContent>
