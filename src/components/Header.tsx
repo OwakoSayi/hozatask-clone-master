@@ -43,14 +43,27 @@ export const Header = () => {
   const { counts } = useNotifications();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      // If there's an error or invalid session, clear user state
+      if (error || !session) {
+        setUser(null);
+        setIsSupplierUser(false);
+        return;
+      }
       setUser(session?.user ?? null);
       if (session?.user) {
         checkSupplierStatus(session.user.id);
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Handle sign out event explicitly
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setIsSupplierUser(false);
+        return;
+      }
+      
       setUser(session?.user ?? null);
       if (session?.user) {
         checkSupplierStatus(session.user.id);
