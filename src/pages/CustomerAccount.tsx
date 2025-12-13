@@ -77,11 +77,16 @@ export default function CustomerAccount() {
     }
 
     setUser(session.user);
-    await Promise.all([
-      fetchProfile(session.user.id),
-      fetchBookings(session.user.id),
-      fetchSupplierStatus(session.user.id)
-    ]);
+    
+    try {
+      await Promise.all([
+        fetchProfile(session.user.id),
+        fetchBookings(session.user.id),
+        fetchSupplierStatus(session.user.id)
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchProfile = async (userId: string) => {
@@ -89,11 +94,11 @@ export default function CustomerAccount() {
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error("Error fetching profile:", error);
-    } else {
+    } else if (data) {
       setProfile(data);
       setEditedProfile(data);
     }
