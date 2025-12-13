@@ -85,61 +85,79 @@ const ProSignup = () => {
   // Check if user is already logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setCheckingAuth(false);
-        return;
-      }
-      
-      setExistingUser(session.user);
-      
-      // Run supplier and profile checks in parallel for faster loading
-      const [supplierResult, profileResult] = await Promise.all([
-        supabase
-          .from("suppliers")
-          .select("id, status")
-          .eq("user_id", session.user.id)
-          .maybeSingle(),
-        supabase
-          .from("profiles")
-          .select("full_name, phone, city")
-          .eq("id", session.user.id)
-          .maybeSingle()
-      ]);
-      
-      const supplier = supplierResult.data;
-      const profile = profileResult.data;
-        
-      if (supplier) {
-        if (supplier.status === "Active") {
-          navigate("/pro-dashboard");
-        } else {
-          toast({
-            title: "Application Pending",
-            description: "Your listing is under review.",
-          });
-          navigate("/account");
-        }
-        return;
-      }
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
-      // Pre-fill from profile if exists
-      if (profile) {
-        setFormData(prev => ({
-          ...prev,
-          email: session.user.email || "",
-          full_name: profile.full_name || "",
-          phone: profile.phone || "",
-          location: prev.location || profile.city || "",
-        }));
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session) {
+          setCheckingAuth(false);
+          return;
+        }
+
+        setExistingUser(session.user);
+
+        // Run supplier and profile checks in parallel for faster loading
+        const [supplierResult, profileResult] = await Promise.all([
+          supabase
+            .from("suppliers")
+            .select("id, status")
+            .eq("user_id", session.user.id)
+            .maybeSingle(),
+          supabase
+            .from("profiles")
+            .select("full_name, phone, city")
+            .eq("id", session.user.id)
+            .maybeSingle(),
+        ]);
+
+        if (supplierResult.error) {
+          throw supplierResult.error;
+        }
+
+        if (profileResult.error) {
+          throw profileResult.error;
+        }
+
+        const supplier = supplierResult.data;
+        const profile = profileResult.data;
+
+        if (supplier) {
+          if (supplier.status === "Active") {
+            navigate("/pro-dashboard");
+          } else {
+            toast({
+              title: "Application Pending",
+              description: "Your listing is under review.",
+            });
+            navigate("/account");
+          }
+          return;
+        }
+
+        // Pre-fill from profile if exists
+        if (profile) {
+          setFormData((prev) => ({
+            ...prev,
+            email: session.user.email || "",
+            full_name: profile.full_name || "",
+            phone: profile.phone || "",
+            location: prev.location || profile.city || "",
+          }));
+        }
+      } catch (error) {
+        console.error("Error checking auth for pro signup:", error);
+        // Fail open so user can still proceed with signup instead of being stuck on loader
+      } finally {
+        setCheckingAuth(false);
       }
-      
-      setCheckingAuth(false);
     };
-    
+
     checkAuth();
   }, [navigate, toast]);
+
 
   const progress = (currentStep / STEPS.length) * 100;
 
