@@ -10,12 +10,11 @@ import ResetPassword from "./pages/ResetPassword";
 import SupplierSubmission from "./pages/SupplierSubmission";
 import ProSignup from "./pages/ProSignup";
 import SupplierProfile from "./pages/SupplierProfile";
-import SupplierDashboard from "./pages/SupplierDashboard";
+import ProHome from "./pages/ProHome";
 import SupplierDirectory from "./pages/SupplierDirectory";
 import PostProject from "./pages/PostProject";
 import MyProjects from "./pages/MyProjects";
 import ProjectDetail from "./pages/ProjectDetail";
-import ProLeads from "./pages/ProLeads";
 import BuyCredits from "./pages/BuyCredits";
 import PaymentCallback from "./pages/PaymentCallback";
 import Messages from "./pages/Messages";
@@ -64,12 +63,13 @@ const App = () => (
           <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/project/:id" element={<ProjectDetail />} />
           
-          {/* Pro flow */}
+          {/* Pro flow - Unified dashboard */}
           <Route path="/become-pro" element={<BecomePro />} />
           <Route path="/become-pro/signup" element={<ProSignup />} />
           <Route path="/become-pro/legacy" element={<SupplierSubmission />} />
-          <Route path="/pro-dashboard" element={<SupplierDashboard />} />
-          <Route path="/leads" element={<ProLeads />} />
+          <Route path="/pro-home" element={<ProHome />} />
+          <Route path="/pro-dashboard" element={<ProHome />} />
+          <Route path="/leads" element={<ProHome />} />
           <Route path="/buy-credits" element={<BuyCredits />} />
           <Route path="/payment-callback" element={<PaymentCallback />} />
           
