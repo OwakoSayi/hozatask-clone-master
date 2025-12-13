@@ -94,6 +94,20 @@ export const Header = () => {
 
     return (
       <div className="flex flex-col gap-1 mt-6">
+        {/* User Info when logged in */}
+        {user && (
+          <div className="flex items-center gap-3 px-3 py-4 mb-2 bg-muted/50 rounded-lg">
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">
+                {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+          </div>
+        )}
         {/* Explore Services - Expandable */}
         <Collapsible open={showServices} onOpenChange={setShowServices}>
           <CollapsibleTrigger asChild>
