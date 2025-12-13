@@ -389,7 +389,9 @@ export type Database = {
           created_at: string
           credits: number
           id: string
+          lead_mode: string | null
           license_verified: boolean | null
+          monthly_budget_cap: number | null
           response_rate: number | null
           subscription_expires_at: string | null
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
@@ -405,7 +407,9 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          lead_mode?: string | null
           license_verified?: boolean | null
+          monthly_budget_cap?: number | null
           response_rate?: number | null
           subscription_expires_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -421,7 +425,9 @@ export type Database = {
           created_at?: string
           credits?: number
           id?: string
+          lead_mode?: string | null
           license_verified?: boolean | null
+          monthly_budget_cap?: number | null
           response_rate?: number | null
           subscription_expires_at?: string | null
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -490,12 +496,16 @@ export type Database = {
           budget_min: number | null
           category: string
           created_at: string
+          date_flexibility: string | null
           description: string
           id: string
+          images: string[] | null
           lead_cost_credits: number | null
           location: string
           preferred_date: string | null
           preferred_time: string | null
+          property_type: string | null
+          scope_size: string | null
           status: string
           title: string
           updated_at: string
@@ -507,12 +517,16 @@ export type Database = {
           budget_min?: number | null
           category: string
           created_at?: string
+          date_flexibility?: string | null
           description: string
           id?: string
+          images?: string[] | null
           lead_cost_credits?: number | null
           location: string
           preferred_date?: string | null
           preferred_time?: string | null
+          property_type?: string | null
+          scope_size?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -524,12 +538,16 @@ export type Database = {
           budget_min?: number | null
           category?: string
           created_at?: string
+          date_flexibility?: string | null
           description?: string
           id?: string
+          images?: string[] | null
           lead_cost_credits?: number | null
           location?: string
           preferred_date?: string | null
           preferred_time?: string | null
+          property_type?: string | null
+          scope_size?: string | null
           status?: string
           title?: string
           updated_at?: string
@@ -754,16 +772,22 @@ export type Database = {
           contact_name: string
           created_at: string | null
           description: string | null
+          employee_count: string | null
           id: string
           images: string[] | null
+          licenses: string[] | null
           location: string | null
           phone: string
           price: number | null
+          service_radius_km: number | null
+          show_prices: boolean | null
           status: Database["public"]["Enums"]["supplier_status"] | null
           time_frame: string | null
           title: string
+          travel_preference: string | null
           user_id: string | null
           whatsapp: string | null
+          years_in_business: number | null
         }
         Insert: {
           business_name: string
@@ -771,16 +795,22 @@ export type Database = {
           contact_name: string
           created_at?: string | null
           description?: string | null
+          employee_count?: string | null
           id?: string
           images?: string[] | null
+          licenses?: string[] | null
           location?: string | null
           phone: string
           price?: number | null
+          service_radius_km?: number | null
+          show_prices?: boolean | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
           time_frame?: string | null
           title: string
+          travel_preference?: string | null
           user_id?: string | null
           whatsapp?: string | null
+          years_in_business?: number | null
         }
         Update: {
           business_name?: string
@@ -788,16 +818,22 @@ export type Database = {
           contact_name?: string
           created_at?: string | null
           description?: string | null
+          employee_count?: string | null
           id?: string
           images?: string[] | null
+          licenses?: string[] | null
           location?: string | null
           phone?: string
           price?: number | null
+          service_radius_km?: number | null
+          show_prices?: boolean | null
           status?: Database["public"]["Enums"]["supplier_status"] | null
           time_frame?: string | null
           title?: string
+          travel_preference?: string | null
           user_id?: string | null
           whatsapp?: string | null
+          years_in_business?: number | null
         }
         Relationships: []
       }
