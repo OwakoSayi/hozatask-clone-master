@@ -86,47 +86,55 @@ const ProSignup = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setExistingUser(session.user);
-        
-        // Check if already a supplier
-        const { data: supplier } = await supabase
-          .from("suppliers")
-          .select("*")
-          .eq("user_id", session.user.id)
-          .maybeSingle();
-          
-        if (supplier) {
-          if (supplier.status === "Active") {
-            navigate("/pro-dashboard");
-          } else {
-            toast({
-              title: "Application Pending",
-              description: "Your listing is under review.",
-            });
-            navigate("/account");
-          }
-          return;
-        }
-
-        // Pre-fill from profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", session.user.id)
-          .maybeSingle();
-
-        if (profile) {
-          setFormData(prev => ({
-            ...prev,
-            email: session.user.email || "",
-            full_name: profile.full_name || "",
-            phone: profile.phone || "",
-            location: prev.location || profile.city || "",
-          }));
-          // Skip to step 1 if logged in (account step will be auto-skipped)
-        }
+      
+      if (!session) {
+        setCheckingAuth(false);
+        return;
       }
+      
+      setExistingUser(session.user);
+      
+      // Run supplier and profile checks in parallel for faster loading
+      const [supplierResult, profileResult] = await Promise.all([
+        supabase
+          .from("suppliers")
+          .select("id, status")
+          .eq("user_id", session.user.id)
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("full_name, phone, city")
+          .eq("id", session.user.id)
+          .maybeSingle()
+      ]);
+      
+      const supplier = supplierResult.data;
+      const profile = profileResult.data;
+        
+      if (supplier) {
+        if (supplier.status === "Active") {
+          navigate("/pro-dashboard");
+        } else {
+          toast({
+            title: "Application Pending",
+            description: "Your listing is under review.",
+          });
+          navigate("/account");
+        }
+        return;
+      }
+
+      // Pre-fill from profile if exists
+      if (profile) {
+        setFormData(prev => ({
+          ...prev,
+          email: session.user.email || "",
+          full_name: profile.full_name || "",
+          phone: profile.phone || "",
+          location: prev.location || profile.city || "",
+        }));
+      }
+      
       setCheckingAuth(false);
     };
     
