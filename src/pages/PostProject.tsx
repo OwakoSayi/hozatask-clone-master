@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +13,17 @@ import { ChevronLeft, ChevronRight, CheckCircle, Upload, X, Loader2 } from "luci
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/contexts/UserContext";
+import { uploadImagesParallel } from "@/lib/uploadImages";
+import { supabase } from "@/integrations/supabase/client";
 
 const PostProject = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const preselectedCategory = searchParams.get("category") || "";
+
+  const { user, loading: userLoading } = useUser();
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
@@ -45,18 +49,14 @@ const PostProject = () => {
   const [images, setImages] = useState<string[]>([]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast({
-          title: "Login Required",
-          description: "Please sign in to post a project request",
-        });
-        navigate("/auth", { state: { returnTo: `/post-project?category=${preselectedCategory}` } });
-      }
-    };
-    checkAuth();
-  }, [navigate, toast, preselectedCategory]);
+    if (!userLoading && !user) {
+      toast({
+        title: "Login Required",
+        description: "Please sign in to post a project request",
+      });
+      navigate("/auth", { state: { returnTo: `/post-project?category=${preselectedCategory}` } });
+    }
+  }, [user, userLoading, navigate, toast, preselectedCategory]);
 
   const handleNext = () => {
     // Validate current step
@@ -98,24 +98,11 @@ const PostProject = () => {
 
     setUploading(true);
     try {
-      const uploadedUrls: string[] = [];
-      for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `project-images/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
-      }
+      // Upload all images in parallel for speed
+      const uploadedUrls = await uploadImagesParallel(
+        Array.from(files),
+        "project-images"
+      );
       setImages(prev => [...prev, ...uploadedUrls]);
     } catch (error) {
       toast({
@@ -129,13 +116,15 @@ const PostProject = () => {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast({ title: "Error", description: "Not authenticated", variant: "destructive" });
+      return;
+    }
+    
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
       const { error } = await supabase.from("project_requests").insert({
-        user_id: session.user.id,
+        user_id: user.id,
         category: formData.category,
         title: formData.title,
         description: formData.description,
