@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import SupplierSubmission from "./pages/SupplierSubmission";
+import ProSignup from "./pages/ProSignup";
 import SupplierProfile from "./pages/SupplierProfile";
 import SupplierDashboard from "./pages/SupplierDashboard";
 import SupplierDirectory from "./pages/SupplierDirectory";
@@ -65,7 +66,8 @@ const App = () => (
           
           {/* Pro flow */}
           <Route path="/become-pro" element={<BecomePro />} />
-          <Route path="/become-pro/signup" element={<SupplierSubmission />} />
+          <Route path="/become-pro/signup" element={<ProSignup />} />
+          <Route path="/become-pro/legacy" element={<SupplierSubmission />} />
           <Route path="/pro-dashboard" element={<SupplierDashboard />} />
           <Route path="/leads" element={<ProLeads />} />
           <Route path="/buy-credits" element={<BuyCredits />} />
