@@ -8,8 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { MessageSquare, Calendar, MapPin, Phone, Star, Check, X, Clock } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { MessageSquare, Calendar, MapPin, Phone, Star, Check, X, Clock, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 
 interface Quote {
@@ -55,6 +57,11 @@ const ProjectDetail = () => {
   const [selectedQuote, setSelectedQuote] = useState<Quote | null>(null);
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [hiredSupplier, setHiredSupplier] = useState<Quote["supplier"] | null>(null);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     loadProjectAndQuotes();
@@ -114,6 +121,16 @@ const ProjectDetail = () => {
       const hiredQuote = quotesData?.find(q => q.status === "accepted");
       if (hiredQuote) {
         setHiredSupplier(hiredQuote.supplier);
+        
+        // Check if already reviewed
+        const { data: existingReview } = await supabase
+          .from("reviews")
+          .select("id")
+          .eq("supplier_id", hiredQuote.supplier.id)
+          .eq("customer_id", session.user.id)
+          .maybeSingle();
+        
+        setHasReviewed(!!existingReview);
       }
     } catch (error) {
       console.error("Error loading project:", error);
@@ -192,9 +209,83 @@ const ProjectDetail = () => {
     }
   };
 
+  const handleMarkCompleted = async () => {
+    if (!project) return;
+    
+    try {
+      const { error } = await supabase
+        .from("project_requests")
+        .update({ status: "completed" })
+        .eq("id", project.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Project completed!",
+        description: "Would you like to leave a review for the pro?",
+      });
+      
+      loadProjectAndQuotes();
+      setShowReviewDialog(true);
+    } catch (error) {
+      console.error("Error marking project completed:", error);
+      toast({
+        title: "Error",
+        description: "Failed to mark project as completed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!hiredSupplier) return;
+    
+    setSubmittingReview(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      const { error } = await supabase.from("reviews").insert({
+        supplier_id: hiredSupplier.id,
+        customer_id: session.user.id,
+        customer_name: profile?.full_name || session.user.email?.split("@")[0] || "Customer",
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Review submitted!",
+        description: "Thank you for your feedback.",
+      });
+      
+      setShowReviewDialog(false);
+      setHasReviewed(true);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast({
+        title: "Error",
+        description: "Failed to submit review",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending": return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
+      case "open": return "bg-green-500/10 text-green-600 border-green-500/20";
+      case "hired": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
+      case "completed": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
       case "accepted": return "bg-green-500/10 text-green-600 border-green-500/20";
       case "declined": return "bg-red-500/10 text-red-600 border-red-500/20";
       default: return "bg-muted";
@@ -265,11 +356,11 @@ const ProjectDetail = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-green-600">
                 <Check className="h-5 w-5" />
-                Hired Pro
+                {project.status === "completed" ? "Project Completed" : "Hired Pro"}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <Avatar className="h-16 w-16">
                   {hiredSupplier.images?.[0] ? (
                     <AvatarImage src={hiredSupplier.images[0]} />
@@ -280,7 +371,7 @@ const ProjectDetail = () => {
                   <h3 className="font-semibold text-lg">{hiredSupplier.business_name}</h3>
                   <p className="text-muted-foreground">{hiredSupplier.contact_name}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Button asChild>
                     <a href={`tel:${hiredSupplier.phone}`}>
                       <Phone className="h-4 w-4 mr-2" />
@@ -299,6 +390,28 @@ const ProjectDetail = () => {
                     </Button>
                   )}
                 </div>
+              </div>
+              
+              {/* Action buttons for completion and review */}
+              <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-green-500/20">
+                {project.status === "hired" && (
+                  <Button onClick={handleMarkCompleted} className="bg-green-600 hover:bg-green-700">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Completed
+                  </Button>
+                )}
+                {project.status === "completed" && !hasReviewed && (
+                  <Button onClick={() => setShowReviewDialog(true)}>
+                    <Star className="h-4 w-4 mr-2" />
+                    Leave a Review
+                  </Button>
+                )}
+                {hasReviewed && (
+                  <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                    <Star className="h-3 w-3 mr-1 fill-yellow-500" />
+                    Review submitted
+                  </Badge>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -409,6 +522,60 @@ const ProjectDetail = () => {
           )}
           <DialogFooter>
             <Button onClick={() => setShowContactDialog(false)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Leave a Review</DialogTitle>
+            <DialogDescription>
+              How was your experience with {hiredSupplier?.business_name}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            <div>
+              <Label className="text-sm font-medium mb-3 block">Rating</Label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    className="p-1 transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`h-8 w-8 ${
+                        star <= reviewRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="review_comment">Your Review (optional)</Label>
+              <Textarea
+                id="review_comment"
+                rows={4}
+                placeholder="Share your experience with this pro..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
+              Skip
+            </Button>
+            <Button onClick={handleSubmitReview} disabled={submittingReview}>
+              {submittingReview ? "Submitting..." : "Submit Review"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
