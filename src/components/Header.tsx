@@ -74,13 +74,28 @@ export const Header = () => {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
-    setIsOpen(false);
-    navigate("/");
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to log out. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      setUser(null);
+      setIsSupplierUser(false);
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+      setIsOpen(false);
+      navigate("/");
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   const handleNavigate = (path: string) => {
