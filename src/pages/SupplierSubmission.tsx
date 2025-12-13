@@ -13,17 +13,18 @@ import { Progress } from "@/components/ui/progress";
 import { Upload, X, Loader2 } from "lucide-react";
 import { CategoryCombobox } from "@/components/CategoryCombobox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useUser } from "@/contexts/UserContext";
+import { uploadImagesParallel } from "@/lib/uploadImages";
 
 type ListingType = "service" | "event" | "hire";
 
 const SupplierSubmission = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, loading: userLoading } = useUser();
   const [currentStep, setCurrentStep] = useState(1);
   const [uploading, setUploading] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [checkingSupplier, setCheckingSupplier] = useState(true);
   const [listingType, setListingType] = useState<ListingType>("service");
 
   const [formData, setFormData] = useState({
@@ -47,57 +48,46 @@ const SupplierSubmission = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      navigate("/auth");
-      return;
+    // Pre-fill location from profile
+    if (profile?.city) {
+      setFormData(prev => ({ ...prev, location: profile.city }));
     }
+  }, [profile]);
 
-    setUser(session.user);
-
-    // Fetch user profile to get their existing info
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .maybeSingle();
-
-    if (profile) {
-      setUserProfile(profile);
-      // Pre-fill location from profile city
-      setFormData(prev => ({
-        ...prev,
-        location: profile.city || "",
-      }));
-    }
-
-    // Check if user already has a supplier account
-    const { data: existingSupplier } = await supabase
-      .from("suppliers")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (existingSupplier) {
-      if (existingSupplier.status === "Active") {
-        navigate("/supplier-dashboard");
-      } else {
-        toast({
-          title: "Application Pending",
-          description: "Your service listing is under review. We'll notify you once it's approved.",
-        });
-        navigate("/my-account");
+  useEffect(() => {
+    const checkExistingSupplier = async () => {
+      if (userLoading) return;
+      
+      if (!user) {
+        navigate("/auth");
+        return;
       }
-      return;
-    }
 
-    setLoading(false);
-  };
+      // Check if user already has a supplier account
+      const { data: existingSupplier } = await supabase
+        .from("suppliers")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingSupplier) {
+        if (existingSupplier.status === "Active") {
+          navigate("/supplier-dashboard");
+        } else {
+          toast({
+            title: "Application Pending",
+            description: "Your service listing is under review. We'll notify you once it's approved.",
+          });
+          navigate("/my-account");
+        }
+        return;
+      }
+
+      setCheckingSupplier(false);
+    };
+
+    checkExistingSupplier();
+  }, [user, userLoading, navigate, toast]);
 
   const totalSteps = 4;
   const progress = (currentStep / totalSteps) * 100;
@@ -116,28 +106,12 @@ const SupplierSubmission = () => {
     }
 
     setUploading(true);
-
     try {
-      const uploadedUrls: string[] = [];
-
-      for (const file of Array.from(files)) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `supplier-images/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("avatars")
-          .getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
-      }
-
+      // Upload all images in parallel for speed
+      const uploadedUrls = await uploadImagesParallel(
+        Array.from(files),
+        "supplier-images"
+      );
       setImages([...images, ...uploadedUrls]);
       toast({
         title: "Images uploaded",
@@ -188,7 +162,7 @@ const SupplierSubmission = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !userProfile) return;
+    if (!user || !profile) return;
 
     setSubmitting(true);
 
@@ -202,9 +176,9 @@ const SupplierSubmission = () => {
       const { error } = await supabase.from("suppliers").insert({
         user_id: user.id,
         business_name: formData.business_name,
-        contact_name: userProfile.full_name, // From profile
-        phone: userProfile.phone, // From profile
-        whatsapp: formData.whatsapp || userProfile.phone,
+        contact_name: profile.full_name,
+        phone: profile.phone,
+        whatsapp: formData.whatsapp || profile.phone,
         location: formData.location,
         category: formData.category,
         title: formData.title,
@@ -251,9 +225,9 @@ const SupplierSubmission = () => {
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold mb-4">Business Information</h3>
-              {userProfile && (
+              {profile && (
                 <p className="text-sm text-muted-foreground mb-4">
-                  Listing as: <span className="font-medium text-foreground">{userProfile.full_name}</span> • {userProfile.phone}
+                  Listing as: <span className="font-medium text-foreground">{profile.full_name}</span> • {profile.phone}
                 </p>
               )}
             </div>
@@ -574,12 +548,12 @@ const SupplierSubmission = () => {
     }
   };
 
-  if (loading) {
+  if (userLoading || checkingSupplier) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <Header />
         <div className="container mx-auto px-4 py-8 flex-1 flex items-center justify-center">
-          <p className="text-muted-foreground">Loading...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
         <Footer />
       </div>
