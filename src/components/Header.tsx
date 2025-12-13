@@ -67,7 +67,7 @@ export const Header = () => {
       .from("suppliers")
       .select("status")
       .eq("user_id", userId)
-      .eq("status", "Active")
+      .in("status", ["Active", "Pending"])
       .maybeSingle();
     
     setIsSupplierUser(!!data);
@@ -189,20 +189,18 @@ export const Header = () => {
                 </Badge>
               )}
             </Button>
+            <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full justify-start">
+              Account
+            </Button>
             {!isSupplierUser && (
-              <>
-                <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-between">
-                  <span>My Projects</span>
-                  {counts.unreadQuotes > 0 && (
-                    <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
-                      {counts.unreadQuotes}
-                    </Badge>
-                  )}
-                </Button>
-                <Button variant="ghost" onClick={() => handleNavigate("/account")} className="w-full justify-start">
-                  Account
-                </Button>
-              </>
+              <Button variant="ghost" onClick={() => handleNavigate("/my-projects")} className="w-full justify-between">
+                <span>My Projects</span>
+                {counts.unreadQuotes > 0 && (
+                  <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                    {counts.unreadQuotes}
+                  </Badge>
+                )}
+              </Button>
             )}
             <Button variant="destructive" onClick={handleLogout} className="w-full">
               Log out
@@ -318,20 +316,18 @@ export const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => handleNavigate("/account")}>
+                      Account
+                    </DropdownMenuItem>
                     {!isSupplierUser && (
-                      <>
-                        <DropdownMenuItem onClick={() => handleNavigate("/my-projects")} className="flex justify-between">
-                          My Projects
-                          {counts.unreadQuotes > 0 && (
-                            <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
-                              {counts.unreadQuotes}
-                            </Badge>
-                          )}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleNavigate("/account")}>
-                          Account
-                        </DropdownMenuItem>
-                      </>
+                      <DropdownMenuItem onClick={() => handleNavigate("/my-projects")} className="flex justify-between">
+                        My Projects
+                        {counts.unreadQuotes > 0 && (
+                          <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center">
+                            {counts.unreadQuotes}
+                          </Badge>
+                        )}
+                      </DropdownMenuItem>
                     )}
                     {isSupplierUser && (
                       <DropdownMenuItem onClick={() => handleNavigate("/buy-credits")}>
