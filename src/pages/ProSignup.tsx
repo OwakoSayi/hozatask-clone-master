@@ -167,17 +167,15 @@ const ProSignup = () => {
           return;
         }
 
-        // Pre-fill from profile if exists - skip to step 2
-        if (profile) {
-          setFormData((prev) => ({
-            ...prev,
-            email: session.user.email || "",
-            full_name: profile.full_name || "",
-            phone: profile.phone || "",
-            location: prev.location || profile.city || "",
-          }));
-          setCurrentStep(2); // Skip account creation step
-        }
+        // User is signed in but not a supplier yet - pre-fill form and skip to step 2
+        setFormData((prev) => ({
+          ...prev,
+          email: session.user.email || "",
+          full_name: profile?.full_name || session.user.user_metadata?.full_name || "",
+          phone: profile?.phone || session.user.user_metadata?.phone || "",
+          location: prev.location || profile?.city || "",
+        }));
+        setCurrentStep(2); // Always skip account creation step for signed-in users
       } catch (error) {
         console.error("Error checking auth for pro signup:", error);
       } finally {
