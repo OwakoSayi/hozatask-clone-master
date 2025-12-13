@@ -83,6 +83,7 @@ const MyProjects = () => {
       case "open": return "bg-green-500/10 text-green-600 border-green-500/20";
       case "in_progress": return "bg-blue-500/10 text-blue-600 border-blue-500/20";
       case "hired": return "bg-purple-500/10 text-purple-600 border-purple-500/20";
+      case "completed": return "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
       case "closed": return "bg-gray-500/10 text-gray-600 border-gray-500/20";
       case "cancelled": return "bg-red-500/10 text-red-600 border-red-500/20";
       default: return "bg-muted";
