@@ -71,15 +71,8 @@ const SupplierSubmission = () => {
         .maybeSingle();
 
       if (existingSupplier) {
-        if (existingSupplier.status === "Active") {
-          navigate("/supplier-dashboard");
-        } else {
-          toast({
-            title: "Application Pending",
-            description: "Your service listing is under review. We'll notify you once it's approved.",
-          });
-          navigate("/my-account");
-        }
+        // Redirect to dashboard regardless of status - profiles go live immediately
+        navigate("/supplier-dashboard");
         return;
       }
 
@@ -186,17 +179,17 @@ const SupplierSubmission = () => {
         time_frame: timeFrame,
         description: formData.description,
         images: images.length > 0 ? images : null,
-        status: "Pending",
+        status: "Active", // Profile goes live immediately - like Thumbtack
       });
 
       if (error) throw error;
 
       toast({
-        title: "Listing Submitted!",
-        description: "Your listing is under review. We'll notify you once it's approved.",
+        title: "You're Live!",
+        description: "Your profile is now visible to customers. Start receiving leads!",
       });
 
-      navigate("/my-account");
+      navigate("/supplier-dashboard");
     } catch (error) {
       console.error("Error submitting supplier:", error);
       toast({
