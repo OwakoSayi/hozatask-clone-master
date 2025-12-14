@@ -155,15 +155,8 @@ const ProSignup = () => {
         const profile = profileResult.data;
 
         if (supplier) {
-          if (supplier.status === "Active") {
-            navigate("/pro-dashboard");
-          } else {
-            toast({
-              title: "Application Pending",
-              description: "Your listing is under review.",
-            });
-            navigate("/account");
-          }
+          // Redirect to dashboard regardless of status - profiles go live immediately
+          navigate("/pro-dashboard");
           return;
         }
 
@@ -396,7 +389,7 @@ const ProSignup = () => {
         time_frame: formData.time_frame,
         description: formData.description.trim(),
         images: images.length > 0 ? images : null,
-        status: "Pending",
+        status: "Active", // Profile goes live immediately - like Thumbtack
         years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
         employee_count: formData.employee_count,
         service_radius_km: parseInt(formData.service_radius_km),
@@ -407,15 +400,12 @@ const ProSignup = () => {
 
       if (supplierError) throw supplierError;
 
-      // Update pro_account with lead preferences when it's created (after approval)
-      // For now, store the preferences - they'll be used when pro_account is created
-
       toast({
-        title: "You're all set!",
-        description: "Your profile is under review. We'll notify you once approved.",
+        title: "🎉 You're Live!",
+        description: "Your profile is now visible. Start receiving leads right away!",
       });
 
-      navigate("/account");
+      navigate("/pro-dashboard");
     } catch (error: any) {
       toast({
         title: "Error",
