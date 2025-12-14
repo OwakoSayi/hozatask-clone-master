@@ -1,14 +1,13 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { 
-  LayoutDashboard, 
   Zap, 
   Briefcase, 
   Calendar, 
   Star, 
-  Settings,
   MessageSquare,
   CreditCard,
-  User
+  User,
+  BadgeCheck
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,6 +41,7 @@ const menuItems = [
   { id: "services", title: "Services", icon: Briefcase },
   { id: "bookings", title: "Bookings", icon: Calendar },
   { id: "reviews", title: "Reviews", icon: Star },
+  { id: "verifications", title: "Verifications", icon: BadgeCheck },
   { id: "profile", title: "Profile", icon: User },
 ];
 

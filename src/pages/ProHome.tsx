@@ -10,6 +10,7 @@ import { ProServicesSection } from "@/components/pro/ProServicesSection";
 import { ProBookingsSection } from "@/components/pro/ProBookingsSection";
 import { ProReviewsSection } from "@/components/pro/ProReviewsSection";
 import { ProProfileSection } from "@/components/pro/ProProfileSection";
+import { ProVerificationSection } from "@/components/pro/ProVerificationSection";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 
@@ -25,6 +26,17 @@ interface Supplier {
   status: string;
   title: string;
   category: string;
+  years_in_business: number | null;
+}
+
+interface ProAccount {
+  id: string;
+  credits: number;
+  verification_status: "none" | "pending" | "verified" | "top_pro";
+  license_verified: boolean;
+  background_check_completed: boolean;
+  total_hires: number;
+  response_rate: number;
 }
 
 interface ServiceOption {
@@ -76,7 +88,7 @@ const ProHome = () => {
   const [leads, setLeads] = useState<ProjectRequest[]>([]);
   const [sentQuotes, setSentQuotes] = useState<SentQuote[]>([]);
   const [credits, setCredits] = useState(0);
-  const [proAccountId, setProAccountId] = useState<string | null>(null);
+  const [proAccount, setProAccount] = useState<ProAccount | null>(null);
   const [stats, setStats] = useState({ completed: 0, pending: 0, rating: 0 });
 
   useEffect(() => {
@@ -127,16 +139,16 @@ const ProHome = () => {
 
       setSupplier(supplierData);
 
-      // Load pro account for credits
-      const { data: proAccount } = await supabase
+      // Load pro account for credits and verification status
+      const { data: proAccountData } = await supabase
         .from("pro_accounts")
-        .select("id, credits")
+        .select("id, credits, verification_status, license_verified, background_check_completed, total_hires, response_rate")
         .eq("supplier_id", supplierData.id)
         .maybeSingle();
 
-      if (proAccount) {
-        setProAccountId(proAccount.id);
-        setCredits(proAccount.credits);
+      if (proAccountData) {
+        setProAccount(proAccountData as ProAccount);
+        setCredits(proAccountData.credits);
       }
 
       // Load all data in parallel
@@ -227,7 +239,7 @@ const ProHome = () => {
             sentQuotes={sentQuotes}
             credits={credits}
             supplierId={supplier.id}
-            proAccountId={proAccountId}
+            proAccountId={proAccount?.id || null}
             supplierCategory={supplier.category}
             onRefresh={loadAllData}
             onCreditsUpdate={setCredits}
@@ -257,6 +269,14 @@ const ProHome = () => {
           <ProReviewsSection
             reviews={reviews}
             averageRating={stats.rating}
+          />
+        );
+      case "verifications":
+        return (
+          <ProVerificationSection
+            proAccount={proAccount}
+            supplierYearsInBusiness={supplier.years_in_business}
+            onRefresh={loadAllData}
           />
         );
       case "profile":
