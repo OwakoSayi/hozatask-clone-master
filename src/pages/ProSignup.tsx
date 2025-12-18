@@ -332,35 +332,60 @@ const ProSignup = () => {
     }
 
     setUploading(true);
-    try {
-      const uploadedUrls: string[] = [];
-      for (const file of Array.from(files)) {
+    const uploadedUrls: string[] = [];
+    let failCount = 0;
+
+    // Upload in parallel with timeout per file
+    const uploadPromises = Array.from(files).map(async (file) => {
+      try {
         const fileExt = file.name.split(".").pop();
         const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `supplier-images/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
-          .from("avatars")
-          .upload(filePath, file);
+        // Create timeout promise
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("timeout")), 30000);
+        });
 
-        if (uploadError) throw uploadError;
+        const { error: uploadError } = await Promise.race([
+          supabase.storage.from("avatars").upload(filePath, file),
+          timeoutPromise,
+        ]);
+
+        if (uploadError) {
+          failCount++;
+          return null;
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from("avatars")
           .getPublicUrl(filePath);
 
-        uploadedUrls.push(publicUrl);
+        return publicUrl;
+      } catch {
+        failCount++;
+        return null;
       }
-      setImages(prev => [...prev, ...uploadedUrls]);
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
+    });
+
+    const results = await Promise.all(uploadPromises);
+    const successfulUrls = results.filter((url): url is string => url !== null);
+    
+    if (successfulUrls.length > 0) {
+      setImages(prev => [...prev, ...successfulUrls]);
     }
+    
+    if (failCount > 0) {
+      toast({
+        title: failCount === files.length ? "Upload failed" : "Some uploads failed",
+        description: failCount === files.length 
+          ? "Could not upload images. You can continue without them and add later."
+          : `${successfulUrls.length} uploaded, ${failCount} failed. You can add more later.`,
+        variant: failCount === files.length ? "destructive" : "default",
+      });
+    }
+    
+    setUploading(false);
   };
 
   const handleSubmit = async () => {

@@ -131,8 +131,10 @@ const ProHome = () => {
         return;
       }
 
-      if (supplierData.status !== "Active") {
-        toast({ title: "Pending Approval", description: "Your pro account is pending approval" });
+      // Allow all statuses - profiles now go live immediately
+      // If status is Pending, still show dashboard but with limited features
+      if (supplierData.status === "Inactive") {
+        toast({ title: "Account Inactive", description: "Your account has been deactivated. Contact support." });
         navigate("/");
         return;
       }

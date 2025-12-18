@@ -75,8 +75,8 @@ const App = () => (
             <Route path="/buy-credits" element={<BuyCredits />} />
             <Route path="/payment-callback" element={<PaymentCallback />} />
             
-            {/* Messaging */}
-            <Route path="/messages" element={<Messages />} />
+            {/* Messaging - disabled for MVP simplification */}
+            {/* <Route path="/messages" element={<Messages />} /> */}
             
             {/* Cost guides */}
             <Route path="/cost-guides" element={<CostGuide />} />
